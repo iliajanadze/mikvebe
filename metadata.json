@@ -1,0 +1,10 @@
+{
+  "name": "AI შეფი - რეცეპტები თქვენი ინგრედიენტებით",
+  "description": "ჭკვიანი კულინარიული ასისტენტი: გადაუღეთ ფოტო პროდუქტებს ან მაცივარს და მიიღეთ 2-3 გემრიელი, მარტივი რეცეპტი ქართულად.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
