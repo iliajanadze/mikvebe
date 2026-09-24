@@ -595,10 +595,23 @@ app.post('/api/chef/generate-diet-plan', async (req, res) => {
   }
 });
 
+// In-memory feedback store (stores recent submissions for reliability and backup)
+interface StoredFeedback {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  rating: number | string;
+  timestamp: string;
+  deliveredTo: string[];
+}
+const recentFeedbackStore: StoredFeedback[] = [];
+
 // Feedback & Contact Form Endpoint
 app.post('/api/feedback', async (req, res) => {
   try {
-    const { name, email, subject, message, rating } = req.body;
+    const { name, email, subject, message, rating, customFormspreeId } = req.body;
 
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -606,11 +619,94 @@ app.post('/api/feedback', async (req, res) => {
       });
     }
 
+    const targetEmail = process.env.FEEDBACK_TARGET_EMAIL || 'iliajanadze999@gmail.com';
+    const formspreeId = (customFormspreeId || process.env.FORMSPREE_ID || '').toString().trim();
     const timestamp = new Date().toISOString();
+    const formattedDate = new Date().toLocaleString('ka-GE', { timeZone: 'Asia/Tbilisi' });
+
     console.log(`[Mikvebe Feedback] From: ${name} <${email}>, Subject: ${subject || 'უკუკავშირი'}, Rating: ${rating || 'N/A'}`);
     console.log(`[Mikvebe Feedback Body]:\n${message}`);
 
-    // If Web3Forms Access Key is provided in environment, optionally forward
+    const deliveredTo: string[] = [];
+    let needsActivation = false;
+    let activationMessage = '';
+
+    // Determine host / referer for email forwarder
+    const originHeader = (req.headers.origin as string) ||
+      (req.headers.referer as string) ||
+      process.env.APP_URL ||
+      'https://ais-dev-7elnec6uua37ymbojkuien-185139964716.europe-west2.run.app';
+
+    // 1. Forward via FormSubmit (Direct to target email without API keys)
+    try {
+      const formSubmitRes = await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Referer': originHeader,
+          'Origin': originHeader,
+        },
+        body: JSON.stringify({
+          'სახელი (Name)': name,
+          'ელ.ფოსტა (Email)': email,
+          'შეფასება (Rating)': `${rating || 5} / 5 ⭐`,
+          'თემა (Subject)': subject || 'მიკვებე - მომხმარებლის შეტყობინება',
+          'შეტყობინება (Message)': message,
+          'გაგზავნის დრო (Time)': formattedDate,
+          _subject: `[მიკვებე] უკუკავშირი (${rating || 5}★) - ${name}`,
+          _replyto: email,
+          _template: 'table',
+          _captcha: 'false',
+        }),
+      });
+
+      const fsData: any = await formSubmitRes.json().catch(() => ({}));
+      console.log('[Feedback] FormSubmit response:', fsData);
+
+      if (fsData && fsData.message && fsData.message.includes('needs Activation')) {
+        needsActivation = true;
+        activationMessage = fsData.message;
+        deliveredTo.push('FormSubmit (Pending activation email confirmation)');
+      } else if (formSubmitRes.ok || fsData.success === 'true' || fsData.success === true) {
+        deliveredTo.push(`FormSubmit -> ${targetEmail}`);
+      }
+    } catch (fsErr) {
+      console.warn('[Feedback] FormSubmit forward error:', fsErr);
+    }
+
+    // 2. Forward via Formspree if Formspree ID is configured or provided
+    if (formspreeId) {
+      try {
+        const cleanId = formspreeId.replace(/https?:\/\/formspree\.io\/f\//, '').trim();
+        const fspreeRes = await fetch(`https://formspree.io/f/${cleanId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            subject: subject || 'მიკვებე - მომხმარებლის შეტყობინება',
+            rating: `${rating || 5} / 5`,
+            message,
+            targetEmail,
+            submittedAt: formattedDate,
+          }),
+        });
+
+        const fspreeData = await fspreeRes.json().catch(() => ({}));
+        console.log('[Feedback] Formspree response:', fspreeData);
+        if (fspreeRes.ok || (fspreeData && fspreeData.ok)) {
+          deliveredTo.push(`Formspree (${cleanId})`);
+        }
+      } catch (fspreeErr) {
+        console.warn('[Feedback] Formspree forward error:', fspreeErr);
+      }
+    }
+
+    // 3. Forward via Web3Forms if access key is present
     if (process.env.WEB3FORMS_ACCESS_KEY) {
       try {
         await fetch('https://api.web3forms.com/submit', {
@@ -621,24 +717,54 @@ app.post('/api/feedback', async (req, res) => {
             name,
             email,
             subject: subject || `მიკვებე - უკუკავშირი: ${name}`,
-            message: `სახელი: ${name}\nელ.ფოსტა: ${email}\nშეფასება: ${rating || 'არ არის'}\n\nშეტყობინება:\n${message}`,
+            message: `სახელი: ${name}\nელ.ფოსტა: ${email}\nშეფასება: ${rating || 5}/5 ⭐\n\nშეტყობინება:\n${message}\n\nთარიღი: ${formattedDate}`,
             from_name: 'მიკვებე აპლიკაცია',
           }),
         });
-      } catch (forwardErr) {
-        console.warn('[Feedback] Could not forward to Web3Forms:', forwardErr);
+        deliveredTo.push('Web3Forms');
+      } catch (w3Err) {
+        console.warn('[Feedback] Web3Forms forward error:', w3Err);
       }
+    }
+
+    // Always store in recent feedback memory queue
+    const record: StoredFeedback = {
+      id: `fb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name,
+      email,
+      subject: subject || 'უკუკავშირი',
+      message,
+      rating: rating || 5,
+      timestamp,
+      deliveredTo,
+    };
+    recentFeedbackStore.unshift(record);
+    if (recentFeedbackStore.length > 50) {
+      recentFeedbackStore.pop();
     }
 
     return res.json({
       success: true,
-      message: 'მადლობა! თქვენი შეტყობინება წარმატებით მიღებულია. ჩვენი გუნდი უმოკლეს ვადაში დაგიკავშირდებათ.',
+      message: 'მადლობა! თქვენი შეტყობინება წარმატებით მიღებულია.',
+      targetEmail,
+      deliveredTo,
+      needsActivation,
+      activationMessage,
       receivedAt: timestamp,
     });
   } catch (err: any) {
     console.error('[Feedback] Error handling submission:', err);
     return res.status(500).json({ error: 'შეტყობინების გაგზავნა ვერ მოხერხდა' });
   }
+});
+
+// Endpoint to view recent submitted feedbacks (for testing/admin verification)
+app.get('/api/feedback/recent', (_req, res) => {
+  return res.json({
+    total: recentFeedbackStore.length,
+    targetEmail: process.env.FEEDBACK_TARGET_EMAIL || 'iliajanadze999@gmail.com',
+    feedbacks: recentFeedbackStore,
+  });
 });
 
 
