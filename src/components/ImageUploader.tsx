@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Upload, Image as ImageIcon, Sparkles, SlidersHorizontal, Plus, X, Utensils, Check } from 'lucide-react';
+import { Camera, Upload, Image as ImageIcon, Sparkles, SlidersHorizontal, Plus, Minus, Users, X, Utensils, Check } from 'lucide-react';
 import { PRESET_IMAGES, PresetImage } from '../data/presets';
 import { UserPreferences } from '../types/chef';
 
