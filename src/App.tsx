@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ImageUploader } from './components/ImageUploader';
@@ -591,6 +592,7 @@ export default function App() {
         userName={currentUser?.name || ''}
         userEmail={currentUser?.email || ''}
       />
+      <Analytics />
     </div>
   );
 }
