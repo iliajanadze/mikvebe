@@ -155,10 +155,12 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                     <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">1 თვე</span>
                     <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$3.50</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">1 Month Access</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">1 Month Access (~9.50 GEL)</p>
                 </div>
                 <a
-                  href="#checkout-1m"
+                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/9649c076-de24-4be1-8e49-1f4a781c1b3c"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-bold transition-all"
                 >
                   ყიდვა ($3.50)
@@ -170,15 +172,17 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">2 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$5</span>
+                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$4.50</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$2.50/თვეში (დაზოგე 28%)</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$2.25/თვეში (~12.15 GEL)</p>
                 </div>
                 <a
-                  href="#checkout-2m"
+                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/6176674f-fac2-40ae-afc4-f5e64ce198d0"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-bold transition-all"
                 >
-                  ყიდვა ($5)
+                  ყიდვა ($4.50)
                 </a>
               </div>
 
@@ -190,15 +194,17 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                       <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">3 თვე</span>
                       <span className="text-[9px] bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 px-1.5 py-0.2 rounded font-bold">POPULAR</span>
                     </div>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$6.50</span>
+                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$5.50</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$2.17/თვეში (დაზოგე 38%)</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$1.83/თვეში (~14.85 GEL)</p>
                 </div>
                 <a
-                  href="#checkout-3m"
+                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/624b09cc-7019-4154-9f16-4d9028e2b2ab"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-amber-600 dark:hover:bg-amber-700 text-white text-xs font-bold transition-all"
                 >
-                  ყიდვა ($6.50)
+                  ყიდვა ($5.50)
                 </a>
               </div>
 
@@ -210,15 +216,17 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">6 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$9.50</span>
+                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$6.50</span>
                   </div>
-                  <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-3">$1.58/თვეში (დაზოგე 55%)</p>
+                  <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-3">$1.08/თვეში (~17.55 GEL)</p>
                 </div>
                 <a
-                  href="#checkout-6m"
+                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/9b4bb471-32d1-436e-9693-09272b66d055"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-bold shadow-xs transition-all"
                 >
-                  ყიდვა ($9.50) • BEST DEAL
+                  ყიდვა ($6.50) • BEST DEAL
                 </a>
               </div>
             </div>

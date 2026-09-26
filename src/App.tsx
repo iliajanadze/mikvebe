@@ -830,7 +830,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Feature: Modern Minimalist Pricing Section (4 tiers: 1m: $3.50, 2m: $5, 3m: $6.50, 6m: $9.50 BEST DEAL) */}
+        {/* Feature: Modern Minimalist Pricing Section (4 tiers: 1m: $3.50, 2m: $4.50, 3m: $5.50, 6m: $6.50 BEST DEAL) */}
         <PricingSection
           className="border-t-2 border-amber-300/70 dark:border-stone-800"
           onPlanSelected={(plan) => {

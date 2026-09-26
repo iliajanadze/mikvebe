@@ -20,12 +20,12 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: '1m',
     name: '1 თვე',
-    durationLabel: '1 Month Access',
+    durationLabel: '1 Month Access (~9.50₾)',
     price: '$3.50',
     priceNumeric: 3.5,
     period: '/ 1 თვე',
-    monthlyBreakdown: '$3.50 თვეში',
-    checkoutUrl: '#checkout-1m',
+    monthlyBreakdown: '$3.50 თვეში (~9.50 GEL)',
+    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/9649c076-de24-4be1-8e49-1f4a781c1b3c',
     features: [
       'თეფშის კალორიების ანალიზი ფოტოთი',
       'შეფ-დიეტოლოგი და სპორტული აქტივობა',
@@ -35,13 +35,13 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: '2m',
     name: '2 თვე',
-    durationLabel: '2 Months Access',
-    price: '$5',
-    priceNumeric: 5,
+    durationLabel: '2 Months Access (~12.15₾)',
+    price: '$4.50',
+    priceNumeric: 4.5,
     period: '/ 2 თვე',
-    monthlyBreakdown: '$2.50 თვეში',
-    savingsBadge: 'დაზოგე 28%',
-    checkoutUrl: '#checkout-2m',
+    monthlyBreakdown: '$2.25 თვეში (~12.15 GEL)',
+    savingsBadge: 'დაზოგე 36%',
+    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/6176674f-fac2-40ae-afc4-f5e64ce198d0',
     features: [
       'სრული წვდომა 2 თვის განმავლობაში',
       'კალორიები, ცილები, ცხიმები, ნახშირწყლები',
@@ -51,14 +51,14 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: '3m',
     name: '3 თვე',
-    durationLabel: '3 Months Access',
-    price: '$6.50',
-    priceNumeric: 6.5,
+    durationLabel: '3 Months Access (~14.85₾)',
+    price: '$5.50',
+    priceNumeric: 5.5,
     period: '/ 3 თვე',
-    monthlyBreakdown: '$2.17 თვეში',
-    savingsBadge: 'დაზოგე 38%',
+    monthlyBreakdown: '$1.83 თვეში (~14.85 GEL)',
+    savingsBadge: 'დაზოგე 48%',
     isPopular: true,
-    checkoutUrl: '#checkout-3m',
+    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/624b09cc-7019-4154-9f16-4d9028e2b2ab',
     features: [
       'სრული წვდომა 3 თვის განმავლობაში',
       'BMR / TDEE კალკულატორი სპორტსმენებისთვის',
@@ -68,16 +68,16 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: '6m',
     name: '6 თვე',
-    durationLabel: '6 Months Access',
-    price: '$9.50',
-    priceNumeric: 9.5,
+    durationLabel: '6 Months Access (~17.55₾)',
+    price: '$6.50',
+    priceNumeric: 6.5,
     period: '/ 6 თვე',
-    monthlyBreakdown: '$1.58 თვეში',
-    savingsBadge: 'დაზოგე 55%',
+    monthlyBreakdown: '$1.08 თვეში (~17.55 GEL)',
+    savingsBadge: 'დაზოგე 69%',
     isBestDeal: true,
-    checkoutUrl: '#checkout-6m',
+    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/9b4bb471-32d1-436e-9693-09272b66d055',
     features: [
-      'ყველაზე დიდი ეკონომია ($1.58/თვე)',
+      'საუკეთესო ფასი ($1.08/თვე — დაზოგე 69%)',
       '6 თვე შეუზღუდავი წვდომა ყველაფერზე',
       'პრიორიტეტული AI & VIP მხარდაჭერა',
     ],
@@ -250,6 +250,8 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                       {/* Buy Button */}
                       <a
                         href={plan.checkoutUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         onClick={() => onPlanSelected && onPlanSelected(plan)}
                         className={`lemonsqueezy-button w-full py-2.5 px-3 rounded-xl font-serif-geo text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${
                           isBest
@@ -362,6 +364,8 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
 
                     <a
                       href={plan.checkoutUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => onPlanSelected && onPlanSelected(plan)}
                       className={`lemonsqueezy-button w-full py-2 px-2 rounded-xl text-center font-serif-geo text-xs font-bold transition-all block ${
                         isBest
@@ -458,6 +462,8 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                 <div className="pt-1">
                   <a
                     href={plan.checkoutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => onPlanSelected && onPlanSelected(plan)}
                     className={`lemonsqueezy-button w-full py-2.5 px-3 rounded-xl font-serif-geo text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${
                       isBest
