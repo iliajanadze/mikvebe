@@ -1,6 +1,7 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
+ * Application: Mikvebe - Personal AI Dietitian & Culinary Chef
  */
 
 import React, { useState, useEffect } from 'react';
@@ -18,6 +19,10 @@ import { HowItWorksModal } from './components/HowItWorksModal';
 import { DietPlanModal } from './components/DietPlanModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import { UserAccountModal } from './components/UserAccountModal';
+import { LanguageSelectionModal } from './components/LanguageSelectionModal';
+import { PremiumModal } from './components/PremiumModal';
+import { PremiumSection } from './components/PremiumSection';
+import { PricingSection } from './components/PricingSection';
 import {
   CookingMethodSelector,
   CookingMethodFilter,
@@ -27,17 +32,91 @@ import {
   ChefAnalysisResult,
   IngredientDetected,
   Recipe,
+  CookingMethod,
   UserPreferences,
 } from './types/chef';
 import { FullMonthDietPlan } from './types/dietPlan';
 import { UserAccount } from './types/userAccount';
-import { ChefHat, AlertCircle, RefreshCw, Sparkles, Utensils, MessageSquare, Droplets, Calendar } from 'lucide-react';
+import { Language, TRANSLATIONS } from './utils/i18n';
+import {
+  ChefHat,
+  AlertCircle,
+  RefreshCw,
+  Sparkles,
+  Utensils,
+  MessageSquare,
+  Droplets,
+  Calendar,
+  Zap,
+  Camera,
+  Layers,
+} from 'lucide-react';
 
+const STORAGE_LANG_KEY = 'mikvebe_lang';
+const STORAGE_THEME_KEY = 'mikvebe_theme';
+const STORAGE_PREMIUM_KEY = 'mikvebe_is_premium';
 const STORAGE_SAVED_RECIPES_KEY = 'ai_chef_saved_recipes_v1';
 const STORAGE_USER_ACCOUNT_KEY = 'mikvebe_user_account_v1';
 const STORAGE_SAVED_PLANS_KEY = 'mikvebe_saved_diet_plans_v1';
 
 export default function App() {
+  // Language state (defaults to Georgian if unset, opens language picker on first load)
+  const [lang, setLang] = useState<Language>(() => {
+    return (localStorage.getItem(STORAGE_LANG_KEY) as Language) || 'ka';
+  });
+  const [showLangModal, setShowLangModal] = useState<boolean>(() => {
+    return !localStorage.getItem(STORAGE_LANG_KEY);
+  });
+
+  const t = TRANSLATIONS[lang];
+
+  // Dark / Light theme state
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    return localStorage.getItem(STORAGE_THEME_KEY) === 'dark';
+  });
+
+  // Apply dark mode class to html & body elements
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem(STORAGE_THEME_KEY, 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem(STORAGE_THEME_KEY, 'light');
+    }
+  }, [isDark]);
+
+  // Premium state ($5/month All-in-One Premium) - starts locked on initial entrance as requested
+  const [isPremium, setIsPremium] = useState<boolean>(() => {
+    return sessionStorage.getItem(STORAGE_PREMIUM_KEY) === 'true';
+  });
+  const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
+
+  const handleTogglePremium = (active: boolean) => {
+    setIsPremium(active);
+    sessionStorage.setItem(STORAGE_PREMIUM_KEY, active ? 'true' : 'false');
+  };
+
+  const handleOpenPricing = () => {
+    const el = document.getElementById('pricing');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      setShowPremiumModal(true);
+    }
+  };
+
+  const handleSelectLanguage = (selectedLang: Language) => {
+    setLang(selectedLang);
+    localStorage.setItem(STORAGE_LANG_KEY, selectedLang);
+    setShowLangModal(false);
+  };
+
+  // Photo Recipe Search state
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
@@ -53,6 +132,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<ChefAnalysisResult | null>(null);
+  const [seenRecipeTitles, setSeenRecipeTitles] = useState<string[]>([]);
 
   // User Account state
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
@@ -74,10 +154,10 @@ export default function App() {
     }
   });
 
-  // Active selected diet plan to open in modal
   const [selectedPlanForModal, setSelectedPlanForModal] = useState<FullMonthDietPlan | null>(null);
+  const [dietPlanInitialParams, setDietPlanInitialParams] = useState<any>(null);
 
-  // Modals state
+  // Saved recipes state
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_SAVED_RECIPES_KEY);
@@ -87,6 +167,7 @@ export default function App() {
     }
   });
 
+  // Modals state
   const [showSavedModal, setShowSavedModal] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [showDietPlanModal, setShowDietPlanModal] = useState<boolean>(false);
@@ -122,7 +203,7 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // Save 1-month diet plans to localStorage
+  // Save diet plans to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_SAVED_PLANS_KEY, JSON.stringify(savedDietPlans));
@@ -139,7 +220,6 @@ export default function App() {
       return [plan, ...prev];
     });
 
-    // Auto-create anonymous account if not already logged in
     if (!currentUser) {
       const randomId = `MIK-${Math.floor(10000 + Math.random() * 90000)}`;
       setCurrentUser({
@@ -147,7 +227,7 @@ export default function App() {
         name: 'ჩემი ანგარიში',
         email: 'user@mikvebe.ge',
         createdAt: new Date().toISOString(),
-        membershipStatus: 'პრემიუმ (აქტიური)',
+        membershipStatus: isPremium ? 'პრემიუმ (აქტიური)' : 'უფასო',
         savedPlanIds: [plan.id],
       });
     } else {
@@ -176,7 +256,7 @@ export default function App() {
       name: userData.name,
       email: userData.email,
       createdAt: new Date().toISOString(),
-      membershipStatus: 'პრემიუმ (აქტიური)',
+      membershipStatus: isPremium ? 'პრემიუმ (აქტიური)' : 'უფასო',
       savedPlanIds: savedDietPlans.map((p) => p.id),
     };
     setCurrentUser(newAccount);
@@ -196,6 +276,7 @@ export default function App() {
     setSelectedImage(null);
     setSelectedPreset(null);
     setAnalysisResult(null);
+    setSeenRecipeTitles([]);
     setError(null);
   };
 
@@ -222,10 +303,31 @@ export default function App() {
         throw new Error(data.error || 'შეცდომა რეცეპტების მომზადებისას');
       }
 
+      // Guarantee strict 2 fried, 2 boiled, 2 soup allocation
+      if (Array.isArray(data.recipes)) {
+        const defaultMethods: CookingMethod[] = [
+          'შემწვარი',
+          'შემწვარი',
+          'მოხარშული',
+          'მოხარშული',
+          'წვნიანი',
+          'წვნიანი',
+        ];
+        data.recipes.forEach((rec: Recipe, idx: number) => {
+          if (!rec.cookingMethod || !['შემწვარი', 'მოხარშული', 'წვნიანი'].includes(rec.cookingMethod)) {
+            rec.cookingMethod = defaultMethods[idx % defaultMethods.length];
+          }
+        });
+
+        // Seed seen recipe titles with the initial 6
+        const initialTitles = data.recipes.map((r: any) => r.title);
+        setSeenRecipeTitles(initialTitles);
+      }
+
       setAnalysisResult(data);
       setTargetServings(preferences.servings || 2);
 
-      // Smooth scroll down to results
+      // Smooth scroll to results
       setTimeout(() => {
         const resultsSection = document.getElementById('recipes-section');
         resultsSection?.scrollIntoView({ behavior: 'smooth' });
@@ -239,6 +341,95 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const [isRegeneratingDishes, setIsRegeneratingDishes] = useState<boolean>(false);
+
+  const handleAnalyzeMore = async () => {
+    if (!selectedImage && !selectedPreset) return;
+    if (!analysisResult) return;
+
+    setIsRegeneratingDishes(true);
+    setError(null);
+
+    // Accumulate all previously seen titles across all clicks so far
+    const currentTitles = analysisResult.recipes ? analysisResult.recipes.map((r) => r.title) : [];
+    const allExcludedTitles = Array.from(new Set([...seenRecipeTitles, ...currentTitles]));
+
+    try {
+      const response = await fetch('/api/chef/analyze-and-cook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: selectedImage,
+          presetId: selectedPreset,
+          preferences,
+          excludeTitles: allExcludedTitles,
+          knownIngredients: analysisResult.detectedIngredients || [],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'ახალი რეცეპტების მომზადება ვერ მოხერხდა');
+      }
+
+      // Guarantee strict 2 fried, 2 boiled, 2 soup allocation
+      if (Array.isArray(data.recipes)) {
+        const defaultMethods: CookingMethod[] = [
+          'შემწვარი',
+          'შემწვარი',
+          'მოხარშული',
+          'მოხარშული',
+          'წვნიანი',
+          'წვნიანი',
+        ];
+        data.recipes.forEach((rec: Recipe, idx: number) => {
+          if (!rec.cookingMethod || !['შემწვარი', 'მოხარშული', 'წვნიანი'].includes(rec.cookingMethod)) {
+            rec.cookingMethod = defaultMethods[idx % defaultMethods.length];
+          }
+        });
+
+        // Add newly generated titles to cumulative seen set
+        const newTitles = data.recipes.map((r: any) => r.title);
+        setSeenRecipeTitles((prev) => Array.from(new Set([...prev, ...newTitles])));
+      }
+
+      // Keep the exact same photo and ingredients, update only recipes & commentary
+      setAnalysisResult((prev) => {
+        if (!prev) return data;
+        return {
+          ...prev,
+          recipes: data.recipes,
+          detectedIngredients: (prev.detectedIngredients && prev.detectedIngredients.length > 0)
+            ? prev.detectedIngredients
+            : data.detectedIngredients,
+          chefCommentary: data.chefCommentary || prev.chefCommentary,
+        };
+      });
+      setActiveMethodFilter('all');
+
+      // Smooth scroll to results
+      setTimeout(() => {
+        const resultsSection = document.getElementById('recipes-section');
+        resultsSection?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    } catch (err: any) {
+      console.error(err);
+      setError(
+        err?.message ||
+          'ახალი რეცეპტების გენერირებისას დაფიქსირდა შეცდომა. გთხოვთ სცადოთ კვლავ.'
+      );
+    } finally {
+      setIsRegeneratingDishes(false);
+    }
+  };
+
+  const handleOpenDietPlanWithParams = (params: any) => {
+    setSelectedPlanForModal(null);
+    setDietPlanInitialParams(params);
+    setShowDietPlanModal(true);
   };
 
   const handleToggleSaveRecipe = (recipe: Recipe) => {
@@ -282,13 +473,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100/50 flex flex-col font-sans">
+    <div className="min-h-screen bg-stone-100/60 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-200">
       {/* Header */}
       <Header
         savedCount={savedRecipes.length}
         currentUser={currentUser}
+        lang={lang}
+        onLanguageChange={(newLang) => {
+          setLang(newLang);
+          localStorage.setItem(STORAGE_LANG_KEY, newLang);
+        }}
+        onOpenLanguageModal={() => setShowLangModal(true)}
+        isDark={isDark}
+        onToggleTheme={() => setIsDark(!isDark)}
+        isPremium={isPremium}
+        onOpenPremium={handleOpenPricing}
         onOpenSaved={() => setShowSavedModal(true)}
-        onOpenHelp={() => setShowHelpModal(true)}
         onOpenDietPlan={() => {
           setSelectedPlanForModal(null);
           setShowDietPlanModal(true);
@@ -297,58 +497,85 @@ export default function App() {
         onOpenFeedback={() => setShowFeedbackModal(true)}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8">
-        {/* Hero Introduction Banner */}
-        <section className="text-center max-w-2xl mx-auto space-y-2.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold border border-amber-300/60">
-            <ChefHat className="w-3.5 h-3.5 text-amber-700" />
-            <span>თქვენი პერსონალური შეფ-მზარეული</span>
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-12">
+        {/* Hero Section */}
+        <section className="text-center max-w-3xl mx-auto space-y-3.5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 text-xs font-bold border border-amber-300/70 dark:border-amber-800 shadow-2xs">
+            <ChefHat className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <span>{t.heroBadge}</span>
           </div>
-          <h1 className="font-serif-geo text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight leading-tight">
-            რა მოვამზადოთ დღეს?
+
+          <h1 className="font-serif-geo text-3xl sm:text-4xl md:text-5xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight leading-tight">
+            {t.heroTitle}
           </h1>
-          <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
-            გადაუღეთ ფოტო თქვენს პროდუქტებს ან აირჩიეთ ნიმუში. შეფი ამოიცნობს ინგრედიენტებს და
-            შემოგთავაზებთ 2-3 გემრიელ, მარტივ რეცეპტს ქართულად!
+
+          <p className="text-stone-600 dark:text-stone-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+            {t.heroSubtitle}
           </p>
 
-          {/* Clinical Dietitian & Personal Chef Banner */}
-          <div className="pt-2">
+          {/* Quick Action Navigation Pills */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={() => setShowDietPlanModal(true)}
-              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-600/10 via-orange-500/15 to-amber-600/10 hover:from-amber-600/20 hover:to-orange-600/20 border border-amber-300 text-amber-950 font-bold text-xs sm:text-sm shadow-xs transition-all hover:scale-[1.01]"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-600/10 via-orange-500/15 to-amber-600/10 dark:from-amber-900/30 dark:to-orange-900/30 hover:from-amber-600/20 hover:to-orange-600/20 border border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-300 font-bold text-xs sm:text-sm shadow-xs transition-all hover:scale-[1.01]"
             >
               <span className="text-base">🥗</span>
-              <span>გსურთ 1-თვიანი პერსონალური კვების გეგმა და დიეტა?</span>
-              <span className="bg-amber-600 text-white text-[11px] px-2 py-0.5 rounded-full font-bold">
-                დიეტოლოგი & შეფი
+              <span>{t.heroDietBanner}</span>
+              <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                AI შეფი
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenPricing}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-amber-900/20 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+            >
+              <Zap className="w-4 h-4 text-white fill-white" />
+              <span>Upgrade to Premium</span>
             </button>
           </div>
         </section>
 
-        {/* Step 1: Image Uploader & Presets */}
-        <ImageUploader
-          selectedImage={selectedImage}
-          selectedPreset={selectedPreset}
-          onImageSelected={handleImageSelected}
-          onClearImage={handleClearImage}
-          preferences={preferences}
-          onPreferencesChange={setPreferences}
-          onAnalyze={handleAnalyze}
-          isLoading={isLoading}
-        />
+        {/* Feature 1: Photo Recipe Search (Upload/Snap - generates strictly 2 Fried, 2 Boiled, 2 Soups without calories) */}
+        <section id="photo-recipe-search" className="pt-4 border-t border-amber-200/60 dark:border-stone-800 space-y-6">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 text-xs font-bold border border-amber-300 dark:border-amber-800">
+              <Camera className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{t.photoSearchTitle}</span>
+            </div>
+            <h2 className="font-serif-geo text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-stone-100">
+              {t.photoSearchTitle}
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
+              {t.photoSearchSubtitle}
+            </p>
+          </div>
+
+          <ImageUploader
+            selectedImage={selectedImage}
+            selectedPreset={selectedPreset}
+            onImageSelected={handleImageSelected}
+            onClearImage={handleClearImage}
+            preferences={preferences}
+            onPreferencesChange={setPreferences}
+            onAnalyze={handleAnalyze}
+            isLoading={isLoading}
+            isPremium={isPremium}
+            onOpenPremium={() => setShowPremiumModal(true)}
+          />
+        </section>
 
         {/* Error Notification */}
         {error && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-900 text-xs sm:text-sm animate-in fade-in duration-200">
+          <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-900 dark:text-rose-300 text-xs sm:text-sm animate-in fade-in duration-200">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold">შეცდომა</p>
-                <p className="mt-0.5 text-stone-700">{error}</p>
+                <p className="font-semibold">{t.error}</p>
+                <p className="mt-0.5 text-stone-700 dark:text-stone-300">{error}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
@@ -365,9 +592,9 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setError(null)}
-                className="text-stone-500 hover:text-stone-800 font-bold text-xs px-2.5 py-1.5"
+                className="text-stone-500 hover:text-stone-800 dark:hover:text-stone-300 font-bold text-xs px-2.5 py-1.5"
               >
-                დახურვა
+                {t.close}
               </button>
             </div>
           </div>
@@ -375,9 +602,9 @@ export default function App() {
 
         {/* Loading Skeleton during Analysis */}
         {isLoading && (
-          <div className="p-8 sm:p-12 bg-white rounded-3xl border border-amber-200 shadow-sm text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-300">
+          <div className="p-8 sm:p-12 bg-white dark:bg-stone-900 rounded-3xl border border-amber-200 dark:border-stone-800 shadow-sm text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-300">
             <div className="relative">
-              <div className="w-18 h-18 rounded-3xl bg-amber-100 flex items-center justify-center text-amber-700 animate-pulse-slow">
+              <div className="w-18 h-18 rounded-3xl bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center text-amber-700 dark:text-amber-400 animate-pulse-slow">
                 <ChefHat className="w-10 h-10" />
               </div>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center text-white">
@@ -386,25 +613,79 @@ export default function App() {
             </div>
 
             <div>
-              <h3 className="font-serif-geo text-xl font-bold text-stone-900">
-                შეფი სწავლობს თქვენს ინგრედიენტებს...
+              <h3 className="font-serif-geo text-xl font-bold text-stone-900 dark:text-stone-100">
+                {t.photoAnalyzing}
               </h3>
-              <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto mt-1">
-                ვიცნობთ პროდუქტებს, ვადგენთ საუკეთესო კულინარიულ კომბინაციებს და ვწერთ მარტივ, ეტაპობრივ რეცეპტებს ქართულად.
+              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-md mx-auto mt-1">
+                ვიცნობთ პროდუქტებს, ვადგენთ საუკეთესო კულინარიულ კომბინაციებს და ვწერთ მარტივ, ეტაპობრივ რეცეპტებს.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
+            <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-stone-800 px-4 py-2 rounded-xl border border-amber-200 dark:border-stone-700">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />
               <span>გთხოვთ დაელოდოთ რამდენიმე წამი...</span>
             </div>
           </div>
         )}
 
-        {/* Results Section */}
+        {/* Photo Analysis Results Section */}
         {analysisResult && !isLoading && (
           <div id="recipes-section" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            {/* Step 2: Detected Ingredients Badges */}
+            {/* Active Uploaded Photo and Context Banner */}
+            {selectedImage && (
+              <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 dark:from-stone-850 dark:to-stone-800 rounded-3xl p-4 sm:p-5 border-2 border-amber-300 dark:border-stone-700 shadow-sm flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden shrink-0 border-2 border-amber-500 dark:border-amber-400 shadow-md bg-stone-900">
+                  <img
+                    src={selectedImage}
+                    alt="ატვირთული ფოტო"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-1.5 left-1.5 bg-amber-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-xs uppercase">
+                    აქტიური ფოტო
+                  </div>
+                </div>
+
+                <div className="flex-1 text-center sm:text-left space-y-1">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/70 px-2.5 py-1 rounded-lg border border-amber-300/60 dark:border-amber-800">
+                      <Camera className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                      ატვირთული ფოტო შენახულია (არ იშლება)
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-800">
+                      ✓ 2 შემწვარი • 2 მოხარშული • 2 წვნიანი
+                    </span>
+                  </div>
+                  <h3 className="font-serif-geo text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
+                    კერძები მომზადებულია ამ ფოტოს ინგრედიენტებით
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
+                    თუ ეს კერძები არ მოგწონთ, დააჭირეთ <strong>„სხვა“</strong>-ს ქვემოთ და სისტემა <strong>ზუსტად ამავე ფოტოს ინგრედიენტებიდან</strong> შემოგთავაზებთ სრულიად ახალ 6 კერძს.
+                  </p>
+                </div>
+
+                <div className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleAnalyzeMore}
+                    disabled={isRegeneratingDishes || isLoading}
+                    className="px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRegeneratingDishes ? 'animate-spin' : ''}`} />
+                    <span>{isRegeneratingDishes ? 'ამზადებს...' : 'სხვა (ახალი 6)'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* In-progress Regeneration Notification */}
+            {isRegeneratingDishes && (
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 rounded-2xl flex items-center justify-center gap-3 text-amber-900 dark:text-amber-200 text-sm font-semibold shadow-xs animate-pulse">
+                <RefreshCw className="w-4 h-4 animate-spin text-amber-600 dark:text-amber-400" />
+                <span>შეფი ამზადებს ახალ 6 კერძს ამავე ფოტოს ინგრედიენტებით (2 შემწვარი, 2 მოხარშული, 2 წვნიანი)...</span>
+              </div>
+            )}
+
+            {/* Detected Ingredients Badges */}
             <IngredientsBadgeList
               ingredients={analysisResult.detectedIngredients}
               chefCommentary={analysisResult.chefCommentary}
@@ -415,15 +696,15 @@ export default function App() {
             {/* Recipes Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
               <div>
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-lg">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-950/60 px-2.5 py-1 rounded-lg">
                   <Utensils className="w-3.5 h-3.5" />
-                  ნაბიჯი 2
+                  შედეგები: 2 შემწვარი • 2 მოხარშული • 2 წვნიანი
                 </span>
-                <h2 className="font-serif-geo text-2xl sm:text-3xl font-bold text-stone-900 mt-1">
-                  შეფის შემოთავაზებული რეცეპტები
+                <h2 className="font-serif-geo text-2xl sm:text-3xl font-bold text-stone-900 dark:text-stone-100 mt-1">
+                  შეფის რეცეპტები თქვენი ინგრედიენტებით
                 </h2>
-                <p className="text-xs sm:text-sm text-stone-600">
-                  აირჩიეთ სასურველი კერძი, გაეცანით შეფის საიდუმლო რჩევას და დაიწყეთ მომზადება
+                <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">
+                  ფოტოს მიხედვით მომზადებული 6 კერძი (კალორიების გარეშე, რეცეპტებითა და ინგრედიენტებით)
                 </p>
               </div>
 
@@ -439,7 +720,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleAnalyze}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-stone-50 text-stone-700 border border-stone-300 rounded-xl text-xs sm:text-sm font-semibold transition-all"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 rounded-xl text-xs sm:text-sm font-semibold transition-all"
                   title="ხელახლა გენერირება"
                 >
                   <RefreshCw className="w-4 h-4 text-stone-500" />
@@ -448,7 +729,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* 3 Preparation Choices / Categories Bar & People Count Selector */}
+            {/* Preparation Choices Filter & People Count Selector */}
             <CookingMethodSelector
               recipes={analysisResult.recipes}
               activeFilter={activeMethodFilter}
@@ -457,7 +738,7 @@ export default function App() {
               onServingsChange={setTargetServings}
             />
 
-            {/* Recipe Cards List */}
+            {/* Recipe Cards List with Premium-gated Calories */}
             {(() => {
               const filteredRecipes = analysisResult.recipes.filter((r) => {
                 if (activeMethodFilter === 'all') return true;
@@ -466,8 +747,8 @@ export default function App() {
 
               if (filteredRecipes.length === 0) {
                 return (
-                  <div className="p-8 bg-white rounded-3xl border border-dashed border-stone-300 text-center space-y-3">
-                    <p className="text-sm font-medium text-stone-600">
+                  <div className="p-8 bg-white dark:bg-stone-900 rounded-3xl border border-dashed border-stone-300 dark:border-stone-700 text-center space-y-3">
+                    <p className="text-sm font-medium text-stone-600 dark:text-stone-300">
                       არჩეულ კატეგორიაში ({activeMethodFilter}) კერძი ვერ მოიძებნა.
                     </p>
                     <button
@@ -488,6 +769,8 @@ export default function App() {
                       key={recipe.id || idx}
                       recipe={recipe}
                       index={idx}
+                      isPremium={isPremium}
+                      onOpenPremium={() => setShowPremiumModal(true)}
                       initialServings={targetServings}
                       isSaved={savedRecipes.some((r) => r.id === recipe.id)}
                       onToggleSave={handleToggleSaveRecipe}
@@ -499,8 +782,88 @@ export default function App() {
                 </div>
               );
             })()}
+
+            {/* Direct "სხვა" (ახალი 6 კერძი ამავე ფოტოდან) Action Banner */}
+            <div className="pt-8 pb-4 border-t border-amber-200/80 dark:border-stone-800 flex flex-col items-center justify-center text-center space-y-4">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-950/60 px-3 py-1 rounded-full">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  უფასო რეჟიმი • მეტი იდეა
+                </span>
+                <h3 className="font-serif-geo text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100">
+                  არ მოგეწონათ შემოთავაზებული კერძები?
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-lg mx-auto leading-relaxed">
+                  დააჭირეთ ქვემოთ ღილაკს <strong>„სხვა“</strong> და სისტემა <strong>ზუსტად იმავე ატვირთული ფოტოს ინგრედიენტებიდან გამომდინარე</strong> მომენტალურად გამოიტანს სრულიად ახალ 6 კერძს (ისევ 2 შემწვარი, 2 მოხარშული, 2 წვნიანი).
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleAnalyzeMore}
+                  disabled={isRegeneratingDishes || isLoading}
+                  id="btn-photo-recipe-more"
+                  className="px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-700 hover:to-orange-700 text-white rounded-2xl font-serif-geo font-bold text-sm sm:text-base shadow-lg shadow-amber-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer disabled:opacity-60"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRegeneratingDishes ? 'animate-spin' : ''}`} />
+                  <span>
+                    {isRegeneratingDishes
+                      ? 'შეფი ამზადებს ახალ 6 კერძს...'
+                      : 'სხვა (ახალი 6 კერძი ამავე ფოტოდან)'}
+                  </span>
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const photoSection = document.getElementById('photo-recipe-search');
+                    photoSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-5 py-3.5 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-2xs"
+                >
+                  ფოტოს შეცვლა
+                </button>
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Feature: Modern Minimalist Pricing Section (4 tiers: 1m: $2, 2m: $3.50, 3m: $5, 6m: $8 BEST DEAL) */}
+        <PricingSection
+          className="border-t-2 border-amber-300/70 dark:border-stone-800"
+          onPlanSelected={(plan) => {
+            console.log('Selected Lemon Squeezy tier:', plan.id);
+          }}
+        />
+
+        {/* Feature 2: Strictly Dedicated VIP & Premium Section */}
+        <section id="premium-package-section" className="pt-6 border-t-2 border-amber-300/70 dark:border-stone-800 space-y-6">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-black uppercase tracking-wider shadow-sm">
+              <Zap className="w-3.5 h-3.5 fill-white" />
+              <span>VIP & პრემიუმ სივრცე</span>
+            </div>
+            <h2 className="font-serif-geo text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-stone-100">
+              პრემიუმ პაკეტი: მზა თეფშის კალორიები & შეფ-დიეტოლოგი
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
+              მკაცრად გამოყოფილი პრემიუმ სივრცე: ცალკე ფოტოს ატვირთვა მზა თეფშებისთვის კალორიების ზუსტი დათვლით + პერსონალური შეფ-დიეტოლოგი სპორტული აქტივობისა და მიზნების მიხედვით.
+            </p>
+          </div>
+
+          <PremiumSection
+            isPremium={isPremium}
+            onTogglePremium={handleTogglePremium}
+            onOpenDietPlan={() => {
+              setSelectedPlanForModal(null);
+              setDietPlanInitialParams(null);
+              setShowDietPlanModal(true);
+            }}
+            onOpenDietPlanWithParams={handleOpenDietPlanWithParams}
+          />
+        </section>
       </main>
 
       {/* Footer */}
@@ -523,11 +886,30 @@ export default function App() {
       <button
         type="button"
         onClick={() => openAskChef(null)}
-        className="fixed bottom-5 left-5 z-40 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white p-3 sm:px-4 sm:py-3 rounded-2xl shadow-xl border border-amber-300/40 flex items-center gap-2 font-serif-geo font-bold text-xs sm:text-sm transition-transform active:scale-95"
+        className="fixed bottom-5 left-5 z-40 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white p-3 sm:px-4 sm:py-3 rounded-2xl shadow-xl border border-amber-300/40 flex items-center gap-2 font-serif-geo font-bold text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer"
       >
         <span className="text-base">👨‍🍳</span>
         <span className="hidden xs:inline">ჰკითხე შეფს</span>
       </button>
+
+      {/* Language Selection Modal */}
+      <LanguageSelectionModal
+        isOpen={showLangModal}
+        onSelectLanguage={handleSelectLanguage}
+        currentLanguage={lang}
+        canDismiss={!!localStorage.getItem(STORAGE_LANG_KEY)}
+        onClose={() => setShowLangModal(false)}
+      />
+
+      {/* Premium Upgrade Modal ($5/month) */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        lang={lang}
+        isPremium={isPremium}
+        onTogglePremium={handleTogglePremium}
+        onOpenDietPlan={() => setShowDietPlanModal(true)}
+      />
 
       {/* Modals */}
       <CookingModeModal
@@ -560,9 +942,11 @@ export default function App() {
       <DietPlanModal
         isOpen={showDietPlanModal}
         initialPlan={selectedPlanForModal}
+        initialParams={dietPlanInitialParams}
         onClose={() => {
           setShowDietPlanModal(false);
           setSelectedPlanForModal(null);
+          setDietPlanInitialParams(null);
         }}
         onSavePlan={handleSaveDietPlan}
         isPlanSaved={

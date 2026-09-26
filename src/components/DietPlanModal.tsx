@@ -37,6 +37,17 @@ interface DietPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialPlan?: FullMonthDietPlan | null;
+  initialParams?: Partial<{
+    age: number;
+    gender: 'ქალი' | 'კაცი';
+    heightCm: number;
+    weightKg: number;
+    doesSports: boolean;
+    sportsDaysPerWeek: number;
+    sportsHoursPerDay: number;
+    sportsType: string;
+    goal: any;
+  }> | null;
   onSavePlan?: (plan: FullMonthDietPlan) => void;
   isPlanSaved?: boolean;
 }
@@ -45,6 +56,7 @@ export const DietPlanModal: React.FC<DietPlanModalProps> = ({
   isOpen,
   onClose,
   initialPlan = null,
+  initialParams = null,
   onSavePlan,
   isPlanSaved = false,
 }) => {
@@ -56,8 +68,12 @@ export const DietPlanModal: React.FC<DietPlanModalProps> = ({
   const [activityLevel, setActivityLevel] = useState<
     'მჯდომარე' | 'ზომიერი' | 'აქტიური' | 'ძალიან აქტიური'
   >('ზომიერი');
+  const [doesSports, setDoesSports] = useState<boolean>(true);
+  const [sportsDaysPerWeek, setSportsDaysPerWeek] = useState<number>(3);
+  const [sportsHoursPerDay, setSportsHoursPerDay] = useState<number>(1);
+  const [sportsType, setSportsType] = useState<string>('ფიტნესი / ძალისმიერი');
   const [goal, setGoal] = useState<
-    'წონის დაკლება' | 'კუნთოვანი მასა' | 'შენარჩუნება' | 'ჯანსაღი კვება'
+    'წონის დაკლება' | 'წონის მატება' | 'კუნთოვანი მასა' | 'შენარჩუნება' | 'ჯანსაღი კვება'
   >('წონის დაკლება');
   const [extraNotes, setExtraNotes] = useState<string>('');
 
@@ -75,8 +91,35 @@ export const DietPlanModal: React.FC<DietPlanModalProps> = ({
       setWeightKg(initialPlan.target.weightKg);
       setActivityLevel(initialPlan.target.activityLevel);
       setGoal(initialPlan.target.goal);
+      if (initialPlan.target.doesSports !== undefined) {
+        setDoesSports(initialPlan.target.doesSports);
+      }
+      if (initialPlan.target.sportsDaysPerWeek) {
+        setSportsDaysPerWeek(initialPlan.target.sportsDaysPerWeek);
+      }
+      if (initialPlan.target.sportsHoursPerDay) {
+        setSportsHoursPerDay(initialPlan.target.sportsHoursPerDay);
+      }
+    } else if (initialParams) {
+      if (initialParams.age !== undefined) setAge(initialParams.age);
+      if (initialParams.gender !== undefined) setGender(initialParams.gender);
+      if (initialParams.heightCm !== undefined) setHeightCm(initialParams.heightCm);
+      if (initialParams.weightKg !== undefined) setWeightKg(initialParams.weightKg);
+      if (initialParams.doesSports !== undefined) setDoesSports(initialParams.doesSports);
+      if (initialParams.sportsDaysPerWeek !== undefined) setSportsDaysPerWeek(initialParams.sportsDaysPerWeek);
+      if (initialParams.sportsHoursPerDay !== undefined) setSportsHoursPerDay(initialParams.sportsHoursPerDay);
+      if (initialParams.sportsType !== undefined) setSportsType(initialParams.sportsType);
+      if (initialParams.goal) {
+        if (typeof initialParams.goal === 'string' && initialParams.goal.includes('მატება')) {
+          setGoal('წონის მატება');
+        } else if (typeof initialParams.goal === 'string' && initialParams.goal.includes('შენარჩუნება')) {
+          setGoal('შენარჩუნება');
+        } else {
+          setGoal('წონის დაკლება');
+        }
+      }
     }
-  }, [initialPlan]);
+  }, [initialPlan, initialParams]);
 
   // Active view states
   const [activeWeek, setActiveWeek] = useState<number>(1);
@@ -88,13 +131,17 @@ export const DietPlanModal: React.FC<DietPlanModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Real-time calculated targets preview
+  // Real-time calculated targets preview factoring in sports activity
   const liveTarget = calculateDietTargets({
     age,
     gender,
     heightCm,
     weightKg,
     activityLevel,
+    doesSports,
+    sportsDaysPerWeek,
+    sportsHoursPerDay,
+    sportsType,
     goal,
   });
 
@@ -261,12 +308,101 @@ export const DietPlanModal: React.FC<DietPlanModalProps> = ({
                   onChange={(e) => setGoal(e.target.value as any)}
                   className="w-full px-3 py-2 bg-white rounded-xl border border-stone-300 text-sm font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  <option value="წონის დაკლება">წონის დაკლება (ცხიმის კლება)</option>
-                  <option value="კუნთოვანი მასა">კუნთოვანი მასის მომატება</option>
+                  <option value="წონის დაკლება">წონის დაკლება (ცხიმის კლება - დეფიციტი)</option>
+                  <option value="წონის მატება">წონის მატება / კუნთოვანი მასა (სურპლუსი)</option>
                   <option value="შენარჩუნება">წონის შენარჩუნება & ენერგია</option>
                   <option value="ჯანსაღი კვება">ჯანსაღი კვება & დეტოქსი</option>
                 </select>
               </div>
+            </div>
+
+            {/* Sports Activity Block */}
+            <div className="mt-4 p-3.5 sm:p-4 rounded-2xl bg-white/90 border border-amber-300 shadow-2xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={doesSports}
+                    onChange={(e) => setDoesSports(e.target.checked)}
+                    className="w-5 h-5 rounded-lg text-amber-600 border-stone-300 focus:ring-amber-500 accent-amber-600 cursor-pointer"
+                  />
+                  <div>
+                    <span className="font-serif-geo text-sm font-bold text-stone-900 flex items-center gap-1.5">
+                      <Dumbbell className="w-4 h-4 text-amber-600" />
+                      დავდივარ სპორტზე / რეგულარულად ვვარჯიშობ
+                    </span>
+                    <span className="text-[11px] text-stone-500 block">
+                      შეფი ზუსტად გაითვალისწინებს ვარჯიშის დროს დახარჯულ ენერგიას
+                    </span>
+                  </div>
+                </label>
+
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                  doesSports
+                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                    : 'bg-stone-100 text-stone-500'
+                }`}>
+                  {doesSports ? 'აქტიური სპორტული რეჟიმი' : 'სპორტის გარეშე'}
+                </span>
+              </div>
+
+              {doesSports && (
+                <div className="pt-2 border-t border-stone-100 grid grid-cols-1 sm:grid-cols-3 gap-3 animate-in fade-in">
+                  <div>
+                    <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                      კვირაში რამდენჯერ?
+                    </label>
+                    <select
+                      value={sportsDaysPerWeek}
+                      onChange={(e) => setSportsDaysPerWeek(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 bg-stone-50 rounded-xl border border-stone-300 text-xs font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="1">კვირაში 1 დღე</option>
+                      <option value="2">კვირაში 2 დღე</option>
+                      <option value="3">კვირაში 3 დღე (რეკომენდებული)</option>
+                      <option value="4">კვირაში 4 დღე</option>
+                      <option value="5">კვირაში 5 დღე</option>
+                      <option value="6">კვირაში 6 დღე</option>
+                      <option value="7">ყოველდღე (7 დღე)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                      დღეში რამდენი საათი?
+                    </label>
+                    <select
+                      value={sportsHoursPerDay}
+                      onChange={(e) => setSportsHoursPerDay(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 bg-stone-50 rounded-xl border border-stone-300 text-xs font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="0.5">0.5 სთ (30 წუთი)</option>
+                      <option value="1">1 საათი (სტანდარტული)</option>
+                      <option value="1.5">1.5 საათი (ინტენსიური)</option>
+                      <option value="2">2 საათი</option>
+                      <option value="2.5">2.5+ საათი (პროფესიონალი)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                      სპორტის სახეობა
+                    </label>
+                    <select
+                      value={sportsType}
+                      onChange={(e) => setSportsType(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-stone-50 rounded-xl border border-stone-300 text-xs font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="ფიტნესი / ძალისმიერი">ფიტნესი / სატრენაჟორო დარბაზი</option>
+                      <option value="სირბილი / კარდიო">სირბილი / კარდიო</option>
+                      <option value="ცურვა">ცურვა</option>
+                      <option value="საბრძოლო ხელოვნება">კრივი / საბრძოლო სპორტი</option>
+                      <option value="ფეხბურთი / კალათბურთი">ფეხბურთი / კალათბურთი</option>
+                      <option value="იოგა / პილატესი">იოგა / პილატესი / გაჭიმვები</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Live calculated summary banner */}

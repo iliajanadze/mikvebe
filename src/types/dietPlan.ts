@@ -4,7 +4,11 @@ export interface DietPlanTarget {
   heightCm: number;
   weightKg: number;
   activityLevel: 'მჯდომარე' | 'ზომიერი' | 'აქტიური' | 'ძალიან აქტიური';
-  goal: 'წონის დაკლება' | 'კუნთოვანი მასა' | 'შენარჩუნება' | 'ჯანსაღი კვება';
+  doesSports?: boolean;
+  sportsDaysPerWeek?: number; // 1-7 days per week
+  sportsHoursPerDay?: number; // e.g. 0.5, 1, 1.5, 2, 2.5
+  sportsType?: string;
+  goal: 'წონის დაკლება' | 'წონის მატება' | 'კუნთოვანი მასა' | 'შენარჩუნება' | 'ჯანსაღი კვება';
   bmr: number;
   tdee: number;
   targetDailyCalories: number;

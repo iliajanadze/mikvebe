@@ -27,6 +27,8 @@ const ai = new GoogleGenAI({
 });
 
 const CANDIDATE_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
   'gemini-3-flash-preview',
   'gemini-flash-latest',
   'gemini-3.8-flash',
@@ -87,10 +89,10 @@ function parseJsonClean(rawText: string) {
   return JSON.parse(text);
 }
 
-// Endpoint: Analyze image & generate 2-3 recipes in Georgian
+// Endpoint: Analyze image & generate 6 recipes in Georgian (strictly 2 fried, 2 boiled, 2 soup)
 app.post('/api/chef/analyze-and-cook', async (req, res) => {
   try {
-    const { image, presetId, preferences } = req.body;
+    const { image, presetId, preferences, excludeTitles = [], knownIngredients = [] } = req.body;
 
     let mimeType = 'image/jpeg';
     let base64Data = '';
@@ -138,22 +140,38 @@ app.post('/api/chef/analyze-and-cook', async (req, res) => {
     const excludedIngredients = preferences?.excludedIngredients || [];
     const extraNote = preferences?.extraNote || '';
 
+    const knownListStr = Array.isArray(knownIngredients) && knownIngredients.length > 0
+      ? knownIngredients
+          .map((item: any) => (typeof item === 'string' ? item : item.name))
+          .filter(Boolean)
+          .join(', ')
+      : '';
+
+    const isRegeneration = Array.isArray(excludeTitles) && excludeTitles.length > 0;
+
     const systemInstruction = `შენ ხარ გამოცდილი, შემოქმედებითი და გულისხმიერი ქართველი შეფ-მზარეული (Executive Chef).
 შენი მისიაა:
 1. ყურადღებით შეხედო მოწოდებულ სურათს და ზუსტად ამოიცნო მასზე არსებული ყველა საკვები პროდუქტი და ინგრედიენტი (ბოსტნეული, ხორცი, რძის პროდუქტები, მწვანილი, სანელებლები, ხილი და ა.შ.).
-2. შეადგინო ზუსტად 3 მრავალფეროვანი, უგემრიელესი და რეალისტური რეცეპტი 3 განსხვავებული მომზადების კატეგორიიდან:
-   - 1 კერძი: „წვნიანი“ (სუპი, წვნიანი ბულიონი, ჩაშუშული სოუსით)
-   - 1 კერძი: „შემწვარი“ (ტაფაზე შემწვარი, ღუმელში გამომცხვარი ან დაბრაწული)
-   - 1 კერძი: „მოხარშული“ (მოხარშული, ორთქლზე დამზადებული ან პოშირებული)
-3. თითოეულ რეცეპტს ზუსტად მიუთითე cookingMethod: აუცილებლად „წვნიანი“, „შემწვარი“ ან „მოხარშული“.
-4. თითოეულ რეცეპტს მიუთითე servings: ${servings} (ზუსტად იმდენ ადამიანზე, რამდენიც მოთხოვნილია) და ინგრედიენტების ზუსტი რაოდენობები (გრამები, ცალი, მლ) და კალორიები გათვალე სწორედ ამ ${servings} ადამიანის ულუფაზე.
-5. თითოეულ კერძზე გამოთვალე ზუსტი კალორიულობა (calorieBreakdown):
+2. შეადგინო ზუსტად 6 მრავალფეროვანი, უგემრიელესი და რეალისტური რეცეპტი მკაცრად შემდეგი განაწილებით:
+   - ზუსტად 2 კერძი: „შემწვარი“ (ტაფაზე შემწვარი, ღუმელში გამომცხვარი ან დაბრაწული)
+   - ზუსტად 2 კერძი: „მოხარშული“ (მოხარშული, ორთქლზე დამზადებული ან პოშირებული)
+   - ზუსტად 2 კერძი: „წვნიანი“ (სუპი, წვნიანი ბულიონი, ჩაშუშული სოუსით)
+   (სულ: ზუსტად 6 რეცეპტი: 2 შემწვარი, 2 მოხარშული, 2 წვნიანი).
+3. თითოეულ რეცეპტს ზუსტად მიუთითე cookingMethod: აუცილებლად „შემწვარი“, „მოხარშული“ ან „წვნიანი“ (2 შემწვარი, 2 მოხარშული, 2 წვნიანი).
+4. თითოეულ რეცეპტს მიუთითე servings: ${servings} (ზუსტად იმდენ ადამიანზე, რამდენიც მოთხოვნილია) და ინგრედიენტების ზუსტი რაოდენობები (გრამები, ცალი, მლ) გათვალე სწორედ ამ ${servings} ადამიანის ულუფაზე.
+5. თითოეულ კერძზე გამოთვალე calorieBreakdown (პრემიუმ მომხმარებლებისთვის):
    - totalDishCalories: მთლიანი მომზადებული კერძის სრული კალორია (ყველა პორციის ჯამი, მთელი რიცხვი, მაგ: 650)
    - caloriesPerServing: ერთი პორციის კალორია (მაგ: 325)
    - items: ინგრედიენტების დეტალური ჩამონათვალი მათი კალორიებით (მაგ: კვერცხი 140 კკალ, კარაქი 120 კკალ, პომიდორი 35 კკალ, მწვანილი 10 კკალ და ა.შ.)
    - macros: ცილა, ნახშირწყლები, ცხიმები
 6. პასუხი დაწერე სრულად ქართულ ენაზე, სტრუქტურულად, გასაგებად და დახვეწილად.
-7. გაითვალისწინე, რომ სახლში ტიპურად მოიპოვება საბაზისო სანელებლები (წყალი, მარილი, პილპილი, ზეთი, კარაქი, შაქარი). ყველა სხვა ძირითადი ინგრედიენტი უნდა ეყრდნობოდეს ფოტოს ან მომხმარებლის მიერ დამატებულ ინგრედიენტებს.`;
+7. გაითვალისწინე, რომ სახლში ტიპურად მოიპოვება საბაზისო სანელებლები (წყალი, მარილი, პილპილი, ზეთი, კარაქი, შაქარი). ყველა სხვა ძირითადი ინგრედიენტი უნდა ეყრდნობოდეს ფოტოს ან მომხმარებლის მიერ დამატებულ ინგრედიენტებს.
+8. მკაცრად დაიცავი მომხმარებლის კვების რეჟიმი (${dietary}):
+   ${dietary === 'ვეგეტარიანული' ? '- კატეგორიულად არ გამოიყენო ხორცი, ქათამი, თევზი ან ზღვის პროდუქტები! მხოლოდ მცენარეული/რძის/კვერცხის ინგრედიენტები.' : ''}
+   ${dietary === 'სამარხვო' ? '- კატეგორიულად არ გამოიყენო ცხოველური პროდუქტები (არც ხორცი, არც თევზი, არც რძის პროდუქტი, არც კარაქი, არც კვერცხი)! მხოლოდ მცენარეული სამარხვო ინგრედიენტები.' : ''}
+   ${dietary === 'დაბალკალორიული' ? '- შეარჩიე დაბალკალორიული, მსუბუქი, უცხიმო და ჯანსაღი რეცეპტები.' : ''}
+   ${dietary === 'სწრაფი 20 წთ' ? '- თითოეული კერძის მომზადება უნდა ეტეოდეს მაქსიმუმ 20 წუთში.' : ''}
+${mealType !== 'ნებისმიერი' ? `9. კერძის ტიპი: ყველა შემოთავაზებული კერძი უნდა იყოს მორგებული ტიპზე: „${mealType}“.` : ''}`;
 
     const userPrompt = `გთხოვ, დეტალურად შეისწავლო ეს ფოტო.
 მომხმარებლის პრეფერენციები:
@@ -163,8 +181,12 @@ app.post('/api/chef/analyze-and-cook', async (req, res) => {
 ${additionalIngredients.length > 0 ? `- დამატებით ხელმისაწვდომი ინგრედიენტები: ${additionalIngredients.join(', ')}` : ''}
 ${excludedIngredients.length > 0 ? `- არ გამოიყენო ეს ინგრედიენტები: ${excludedIngredients.join(', ')}` : ''}
 ${extraNote ? `- დამატებითი სურვილი: ${extraNote}` : ''}
+${knownListStr ? `\n- ამავე ატვირთული ფოტოდან უკვე ამოცნობილია შემდეგი ინგრედიენტები: ${knownListStr}.\nკატეგორიული მოთხოვნა: შეინარჩუნე ეს ინგრედიენტები და ზუსტად ამ ფოტოსა და ამავე ინგრედიენტებზე დაყრდნობით შეადგინე სრულიად ახალი 6 კერძი (ზუსტად 2 შემწვარი, 2 მოხარშული, 2 წვნიანი)!` : ''}
+${isRegeneration ? `\n\nმნიშვნელოვანი წესი: მომხმარებელმა დააჭირა ღილაკს „სხვა“! მომხმარებელმა უკვე ნახა ეს კერძები და სურს სრულიად ახალი იდეები:
+უკვე ნანახი კერძები (კატეგორიულად არ გაიმეორო არცერთი მათგანი!): ${excludeTitles.join(', ')}.
+დააგენერირე სრულიად ახალი, განსხვავებული 6 კერძი ზუსტად ამავე ფოტოსა და ამავე ინგრედიენტებიდან!` : ''}
 
-გამოიცანი ფოტოზე არსებული პროდუქტები და შემოგვთავაზე ზუსტად 3 გემრიელი რეცეპტი: 1 „წვნიანი“, 1 „შემწვარი“ და 1 „მოხარშული“, თითოეულის სრული კალორიულობით და ინგრედიენტების მიხედვით დეტალური დაშლით.`;
+გამოიცანი/დაადასტურე ფოტოზე არსებული პროდუქტები და შემოგვთავაზე ზუსტად 6 ${isRegeneration ? 'სრულიად ახალი და განსხვავებული' : ''} გემრიელი რეცეპტი მკაცრად შემდეგი განაწილებით: ზუსტად 2 „შემწვარი“, 2 „მოხარშული“ და 2 „წვნიანი“ კერძი (სულ 6 კერძი), თითოეულის მომზადების წესითა და ინგრედიენტებით.`;
 
     const response = await generateWithFallbackAndRetry({
       contents: {
@@ -342,6 +364,99 @@ ${extraNote ? `- დამატებითი სურვილი: ${extraNo
     }
 
     const data = parseJsonClean(text);
+
+    // Merge / preserve knownIngredients if provided so verified photo ingredients are never lost
+    if (Array.isArray(knownIngredients) && knownIngredients.length > 0) {
+      if (!Array.isArray(data.detectedIngredients)) {
+        data.detectedIngredients = [];
+      }
+      const existingNames = new Set(
+        data.detectedIngredients.map((i: any) => (i?.name || '').trim().toLowerCase())
+      );
+      knownIngredients.forEach((known: any) => {
+        const name = typeof known === 'string' ? known : known?.name;
+        if (name && !existingNames.has(name.trim().toLowerCase())) {
+          data.detectedIngredients.push(
+            typeof known === 'object' && known !== null
+              ? known
+              : { name, category: 'სხვა', confidence: 'მაღალი' }
+          );
+          existingNames.add(name.trim().toLowerCase());
+        }
+      });
+    }
+
+    if (Array.isArray(data.recipes)) {
+      // Normalize cookingMethod strings based on title, summary, and method
+      data.recipes.forEach((rec: any) => {
+        const methodStr = `${rec.cookingMethod || ''} ${rec.title || ''} ${rec.summary || ''}`.toLowerCase();
+        if (
+          methodStr.includes('შემწვ') ||
+          methodStr.includes('ტაფა') ||
+          methodStr.includes('ღუმელ') ||
+          methodStr.includes('დაბრაწ') ||
+          methodStr.includes('გამომცხვ')
+        ) {
+          rec.cookingMethod = 'შემწვარი';
+        } else if (
+          methodStr.includes('წვნიან') ||
+          methodStr.includes('სუპ') ||
+          methodStr.includes('ბულიონ') ||
+          methodStr.includes('ჩაშუშ') ||
+          methodStr.includes('ბორშ') ||
+          methodStr.includes('შაკშუკ')
+        ) {
+          rec.cookingMethod = 'წვნიანი';
+        } else if (
+          methodStr.includes('მოხარშ') ||
+          methodStr.includes('ორთქლ') ||
+          methodStr.includes('პოშირ') ||
+          methodStr.includes('სალათ') ||
+          methodStr.includes('მდუღარე')
+        ) {
+          rec.cookingMethod = 'მოხარშული';
+        }
+      });
+
+      // Strictly ensure exact 2 fried, 2 boiled, 2 soup allocation
+      if (data.recipes.length === 6) {
+        const counts: Record<'შემწვარი' | 'მოხარშული' | 'წვნიანი', number> = {
+          'შემწვარი': 0,
+          'მოხარშული': 0,
+          'წვნიანი': 0,
+        };
+
+        // First pass: keep up to 2 for each method
+        const assigned: Array<'შემწვარი' | 'მოხარშული' | 'წვნიანი' | null> = [null, null, null, null, null, null];
+        data.recipes.forEach((rec: any, idx: number) => {
+          const m = rec.cookingMethod as 'შემწვარი' | 'მოხარშული' | 'წვნიანი';
+          if ((m === 'შემწვარი' || m === 'მოხარშული' || m === 'წვნიანი') && counts[m] < 2) {
+            counts[m]++;
+            assigned[idx] = m;
+          }
+        });
+
+        // Determine which methods still need quota to reach exactly 2 each
+        const remainingNeeded: ('შემწვარი' | 'მოხარშული' | 'წვნიანი')[] = [];
+        (['შემწვარი', 'მოხარშული', 'წვნიანი'] as const).forEach((m) => {
+          while (counts[m] < 2) {
+            remainingNeeded.push(m);
+            counts[m]++;
+          }
+        });
+
+        // Fill remaining unassigned slots
+        data.recipes.forEach((rec: any, idx: number) => {
+          if (!assigned[idx]) {
+            const assignedMethod = remainingNeeded.shift() || 'შემწვარი';
+            rec.cookingMethod = assignedMethod;
+          } else {
+            rec.cookingMethod = assigned[idx];
+          }
+        });
+      }
+    }
+
     return res.json(data);
   } catch (error: any) {
     console.error('Error analyzing image and cooking:', error);
@@ -399,6 +514,124 @@ ${currentIngredients ? `ხელმისაწვდომი პროდუ�
   }
 });
 
+// Premium Endpoint ($5/mo All-in-One): Analyze ready plate/dish for accurate calories & macros
+app.post('/api/chef/analyze-plate-calories', async (req, res) => {
+  try {
+    const { image, notes } = req.body;
+
+    let mimeType = 'image/jpeg';
+    let base64Data = '';
+
+    if (image && typeof image === 'string') {
+      if (image.startsWith('data:')) {
+        const match = image.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          mimeType = match[1];
+          base64Data = match[2];
+        } else {
+          base64Data = image.replace(/^data:[^;]+;base64,/, '');
+        }
+      } else {
+        base64Data = image;
+      }
+    }
+
+    if (!base64Data) {
+      return res.status(400).json({ error: 'გთხოვთ ატვირთოთ მზა კერძის ან თეფშის ფოტო.' });
+    }
+
+    const systemInstruction = `შენ ხარ უმაღლესი კატეგორიის კლინიკური დიეტოლოგი, სპორტული ნუტრიციოლოგი და შეფი.
+შენი ამოცანაა:
+1. ყურადღებით დააკვირდე მომზადებული კერძის ან მთლიანი თეფშის ფოტოს.
+2. ზუსტად ამოიცნო თეფშზე არსებული ყველა შემადგენელი ნაწილი (ხორცი/თევზი, გარნირი, ბოსტნეული, სოუსი, პური, საკმაზი და ა.შ.).
+3. შეაფასო ულუფის წონა (გრამებში) და თითოეული ინგრედიენტის ზუსტი კალორიულობა და მაკრონუტრიენტები (ცილა, ცხიმი, ნახშირწყლები).
+4. გამოთვალო მთლიანი თეფშის სრული კალორია (totalCalories), ჯამური ცილა (proteinGrams), ცხიმი (fatGrams) და ნახშირწყლები (carbsGrams).
+5. მიაწოდო პროფესიონალური დიეტოლოგიური შეფასება (dietitianFeedback) და სპორტსმენებისთვის/ვარჯიშისთვის მორგებული რჩევა (sportsFit).
+6. პასუხი დააბრუნე ქართულ ენაზე, მკაცრად JSON ფორმატში.`;
+
+    const userPrompt = `გთხოვთ, ზუსტად დათვალოთ ამ თეფშზე/კერძში არსებული ყველა კალორია და მაკრონუტრიენტი.
+${notes ? `დამატებითი მინიშნება: ${notes}` : ''}
+დაშალე თითოეული პროდუქტი (რაოდენობა, კალორია, ცილა, ცხიმი, ნახშირწყალი) და შეაფასე კვებითი ღირებულება.`;
+
+    const response = await generateWithFallbackAndRetry({
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType,
+              data: base64Data,
+            },
+          },
+          {
+            text: userPrompt,
+          },
+        ],
+      },
+      config: {
+        systemInstruction,
+        temperature: 0.3,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            dishName: { type: Type.STRING, description: 'კერძის/თეფშის დასახელება' },
+            confidence: { type: Type.STRING, description: 'სიზუსტის დონე (მაღალი, საშუალო)' },
+            estimatedWeightGrams: { type: Type.INTEGER, description: 'სრული ულუფის სავარაუდო წონა გრამებში' },
+            totalCalories: { type: Type.INTEGER, description: 'მთლიანი თეფშის კალორია (კკალ)' },
+            macros: {
+              type: Type.OBJECT,
+              properties: {
+                proteinGrams: { type: Type.INTEGER, description: 'ცილა (გრამი)' },
+                carbsGrams: { type: Type.INTEGER, description: 'ნახშირწყლები (გრამი)' },
+                fatGrams: { type: Type.INTEGER, description: 'ცხიმები (გრამი)' },
+              },
+              required: ['proteinGrams', 'carbsGrams', 'fatGrams'],
+            },
+            items: {
+              type: Type.ARRAY,
+              description: 'თეფშზე არსებული თითოეული პროდუქტი',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, description: 'პროდუქტის სახელი' },
+                  portion: { type: Type.STRING, description: 'სავარაუდო ულუფა (მაგ: 150გ)' },
+                  calories: { type: Type.INTEGER, description: 'კალორია' },
+                  protein: { type: Type.STRING, description: 'ცილა (მაგ: 25გ)' },
+                  fat: { type: Type.STRING, description: 'ცხიმი (მაგ: 12გ)' },
+                  carbs: { type: Type.STRING, description: 'ნახშირწყალი (მაგ: 30გ)' },
+                },
+                required: ['name', 'portion', 'calories', 'protein', 'fat', 'carbs'],
+              },
+            },
+            healthScore: { type: Type.INTEGER, description: 'ჯანმრთელობის ინდექსი 1-100' },
+            dietitianFeedback: { type: Type.STRING, description: 'დიეტოლოგის პროფესიული შეფასება' },
+            sportsFit: { type: Type.STRING, description: 'რეკომენდაცია სპორტსმენებისთვის (წონის კლება/მატება/ვარჯიში)' },
+          },
+          required: [
+            'dishName',
+            'confidence',
+            'estimatedWeightGrams',
+            'totalCalories',
+            'macros',
+            'items',
+            'healthScore',
+            'dietitianFeedback',
+            'sportsFit',
+          ],
+        },
+      },
+    });
+
+    const parsed = parseJsonClean(response.text || '{}');
+    return res.json(parsed);
+  } catch (error: any) {
+    console.error('Error analyzing plate calories:', error);
+    return res.status(500).json({
+      error: error?.message || 'კალორიების ანალიზისას დაფიქსირდა შეცდომა. გთხოვთ სცადოთ თავიდან.',
+    });
+  }
+});
+
 // 4-Week Clinical Dietitian & Personal Chef Plan Endpoint
 app.post('/api/chef/generate-diet-plan', async (req, res) => {
   try {
@@ -424,13 +657,17 @@ app.post('/api/chef/generate-diet-plan', async (req, res) => {
 
 პასუხი აუცილებლად დააბრუნე მკაცრად JSON ფორმატში, Schema-ს შესაბამისად.`;
 
+    const sportsInfo = target.doesSports
+      ? `მომხმარებელი რეგულარულად ვარჯიშობს: კვირაში ${target.sportsDaysPerWeek || 3} დღე, დღეში ${target.sportsHoursPerDay || 1} საათი (${target.sportsType || 'ფიტნესი/ძალისმიერი/კარდიო'}). გაითვალისწინე ვარჯიშის წინა (pre-workout) და შემდგომი (post-workout) ცილოვანი კვება!`
+      : 'მომხმარებელი არ ვარჯიშობს აქტიურად სპორტზე (მჯდომარე/ზომიერი დღიური აქტივობა).';
+
     const userPrompt = `მომხმარებლის ფიზიკური მონაცემები:
 - ასაკი: ${target.age} წელი
 - სქესი: ${target.gender || 'ქალი'}
 - სიმაღლე: ${target.heightCm} სმ
 - წონა: ${target.weightKg} კგ
-- ფიზიკური აქტივობა: ${target.activityLevel || 'ზომიერი'}
-- მიზანი: ${target.goal}
+- სპორტული აქტივობა: ${sportsInfo}
+- მიზანი: ${target.goal} (ზუსტი მორგება წონის კლებისთვის ან მატებისთვის!)
 - გამოთვლილი დღიური კალორაჟი: ${target.targetDailyCalories} კკალ
 - მიზნობრივი მაკრონუტრიენტები: ცილები ~${target.macros?.proteinGrams}გ (${target.macros?.proteinPercent}%), ცხიმები ~${target.macros?.fatGrams}გ (${target.macros?.fatPercent}%), ნახშირწყლები ~${target.macros?.carbsGrams}გ (${target.macros?.carbsPercent}%)
 - რეკომენდებული წყლის რაოდენობა: ${target.dailyWaterLiters} ლიტრი/დღეში

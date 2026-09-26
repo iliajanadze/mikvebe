@@ -69,6 +69,32 @@ export interface ChefAnalysisResult {
   recipes: Recipe[];
 }
 
+export interface PlateCalorieItem {
+  name: string;
+  portion: string;
+  calories: number;
+  protein: string;
+  fat: string;
+  carbs: string;
+}
+
+export interface PlateCalorieResult {
+  dishName: string;
+  confidence: string;
+  estimatedWeightGrams: number;
+  totalCalories: number;
+  macros: {
+    proteinGrams: number;
+    carbsGrams: number;
+    fatGrams: number;
+    fiberGrams?: number;
+  };
+  items: PlateCalorieItem[];
+  healthScore: number;
+  dietitianFeedback: string;
+  sportsFit: string;
+}
+
 export interface UserPreferences {
   dietary: 'ყველაფერი' | 'ვეგეტარიანული' | 'სამარხვო' | 'დაბალკალორიული' | 'სწრაფი 20 წთ';
   mealType: 'ნებისმიერი' | 'საუზმე' | 'სადილი' | 'ვახშამი';
