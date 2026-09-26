@@ -153,7 +153,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">1 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$2</span>
+                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$3.50</span>
                   </div>
                   <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">1 Month Access</p>
                 </div>
@@ -161,7 +161,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                   href="#checkout-1m"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-bold transition-all"
                 >
-                  ყიდვა ($2)
+                  ყიდვა ($3.50)
                 </a>
               </div>
 
@@ -170,15 +170,15 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">2 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$3.50</span>
+                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$5</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$1.75/თვეში (დაზოგე 12%)</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$2.50/თვეში (დაზოგე 28%)</p>
                 </div>
                 <a
                   href="#checkout-2m"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-bold transition-all"
                 >
-                  ყიდვა ($3.50)
+                  ყიდვა ($5)
                 </a>
               </div>
 
@@ -190,15 +190,15 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                       <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">3 თვე</span>
                       <span className="text-[9px] bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 px-1.5 py-0.2 rounded font-bold">POPULAR</span>
                     </div>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$5</span>
+                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$6.50</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$1.66/თვეში (დაზოგე 17%)</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$2.17/თვეში (დაზოგე 38%)</p>
                 </div>
                 <a
                   href="#checkout-3m"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-amber-600 dark:hover:bg-amber-700 text-white text-xs font-bold transition-all"
                 >
-                  ყიდვა ($5)
+                  ყიდვა ($6.50)
                 </a>
               </div>
 
@@ -210,15 +210,15 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">6 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$8</span>
+                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$9.50</span>
                   </div>
-                  <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-3">$1.33/თვეში (დაზოგე 33%)</p>
+                  <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-3">$1.58/თვეში (დაზოგე 55%)</p>
                 </div>
                 <a
                   href="#checkout-6m"
                   className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-bold shadow-xs transition-all"
                 >
-                  ყიდვა ($8) • BEST DEAL
+                  ყიდვა ($9.50) • BEST DEAL
                 </a>
               </div>
             </div>
