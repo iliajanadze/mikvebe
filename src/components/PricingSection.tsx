@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Check, Sparkles, ShieldCheck, ArrowRight, Star, ChevronLeft, ChevronRight, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import { Check, Sparkles, ShieldCheck, Star, ChevronLeft, ChevronRight, LayoutGrid, SlidersHorizontal, Zap, UserPlus, ExternalLink, RotateCcw } from 'lucide-react';
+import { UserAccount } from '../types/userAccount';
+import { AdsterraAdModal } from './AdsterraAdModal';
 
 export interface PricingPlan {
   id: string;
@@ -12,20 +14,19 @@ export interface PricingPlan {
   savingsBadge?: string;
   isBestDeal?: boolean;
   isPopular?: boolean;
-  checkoutUrl: string; // Lemon Squeezy checkout link
   features: string[];
 }
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    id: '1m',
-    name: '1 თვე',
-    durationLabel: '1 Month Access (~9.50₾)',
-    price: '$3.50',
-    priceNumeric: 3.5,
-    period: '/ 1 თვე',
-    monthlyBreakdown: '$3.50 თვეში (~9.50 GEL)',
-    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/9649c076-de24-4be1-8e49-1f4a781c1b3c',
+    id: 'free-8m-starter',
+    name: '8 თვე უფასო VIP',
+    durationLabel: 'სტანდარტული წვდომა (8 თვე უფასოდ)',
+    price: '$0',
+    priceNumeric: 0,
+    period: '/ 8 თვე',
+    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    savingsBadge: '100% უფასო',
     features: [
       'თეფშის კალორიების ანალიზი ფოტოთი',
       'შეფ-დიეტოლოგი და სპორტული აქტივობა',
@@ -33,68 +34,79 @@ export const PRICING_PLANS: PricingPlan[] = [
     ],
   },
   {
-    id: '2m',
-    name: '2 თვე',
-    durationLabel: '2 Months Access (~12.15₾)',
-    price: '$4.50',
-    priceNumeric: 4.5,
-    period: '/ 2 თვე',
-    monthlyBreakdown: '$2.25 თვეში (~12.15 GEL)',
-    savingsBadge: 'დაზოგე 36%',
-    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/6176674f-fac2-40ae-afc4-f5e64ce198d0',
+    id: 'free-8m-diet',
+    name: '8 თვე უფასო VIP',
+    durationLabel: 'კლინიკური დიეტოლოგია (8 თვე უფასოდ)',
+    price: '$0',
+    priceNumeric: 0,
+    period: '/ 8 თვე',
+    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    savingsBadge: '100% უფასო',
     features: [
-      'სრული წვდომა 2 თვის განმავლობაში',
+      'სრული წვდომა 8 თვის განმავლობაში',
       'კალორიები, ცილები, ცხიმები, ნახშირწყლები',
       '1-თვიანი კლინიკური კვების გეგმა',
     ],
   },
   {
-    id: '3m',
-    name: '3 თვე',
-    durationLabel: '3 Months Access (~14.85₾)',
-    price: '$5.50',
-    priceNumeric: 5.5,
-    period: '/ 3 თვე',
-    monthlyBreakdown: '$1.83 თვეში (~14.85 GEL)',
-    savingsBadge: 'დაზოგე 48%',
+    id: 'free-8m-pro',
+    name: '8 თვე უფასო VIP',
+    durationLabel: 'სპორტული & TDEE რეჟიმი (8 თვე უფასოდ)',
+    price: '$0',
+    priceNumeric: 0,
+    period: '/ 8 თვე',
+    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    savingsBadge: '100% უფასო',
     isPopular: true,
-    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/624b09cc-7019-4154-9f16-4d9028e2b2ab',
     features: [
-      'სრული წვდომა 3 თვის განმავლობაში',
+      'სრული წვდომა 8 თვის განმავლობაში',
       'BMR / TDEE კალკულატორი სპორტსმენებისთვის',
       'კვების გეგმების შენახვა & PDF ექსპორტი',
     ],
   },
   {
-    id: '6m',
-    name: '6 თვე',
-    durationLabel: '6 Months Access (~17.55₾)',
-    price: '$6.50',
-    priceNumeric: 6.5,
-    period: '/ 6 თვე',
-    monthlyBreakdown: '$1.08 თვეში (~17.55 GEL)',
-    savingsBadge: 'დაზოგე 69%',
+    id: 'free-8m-all',
+    name: '8 თვე უფასო VIP',
+    durationLabel: 'All-in-One VIP (8 თვე უფასოდ)',
+    price: '$0',
+    priceNumeric: 0,
+    period: '/ 8 თვე',
+    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    savingsBadge: '100% უფასო',
     isBestDeal: true,
-    checkoutUrl: 'https://mikvebe.lemonsqueezy.com/checkout/buy/9b4bb471-32d1-436e-9693-09272b66d055',
     features: [
-      'საუკეთესო ფასი ($1.08/თვე — დაზოგე 69%)',
-      '6 თვე შეუზღუდავი წვდომა ყველაფერზე',
-      'პრიორიტეტული AI & VIP მხარდაჭერა',
+      '8 თვე შეუზღუდავი წვდომა ყველაფერზე',
+      'თეფშის ფოტოს კალორიების სრული გახსნა',
+      'პერსონალური AI შეფი & დიეტოლოგი',
     ],
   },
 ];
 
 interface PricingSectionProps {
+  currentUser?: UserAccount | null;
+  onRequireAuth?: (reason: string) => void;
   onPlanSelected?: (plan: PricingPlan) => void;
+  onActivateVIP?: () => void;
+  onResetVIP?: () => void;
+  isPremium?: boolean;
   className?: string;
 }
 
 export const PricingSection: React.FC<PricingSectionProps> = ({
+  currentUser,
+  onRequireAuth,
   onPlanSelected,
+  onActivateVIP,
+  onResetVIP,
+  isPremium = false,
   className = '',
 }) => {
   const [activeMobileIndex, setActiveMobileIndex] = useState(0);
   const [mobileViewMode, setMobileViewMode] = useState<'slider' | 'grid'>('slider');
+  const [planClicks, setPlanClicks] = useState<Record<string, number>>({});
+  const [statusNotice, setStatusNotice] = useState<string | null>(null);
+  const [adModalPlan, setAdModalPlan] = useState<PricingPlan | null>(null);
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = () => {
@@ -115,6 +127,104 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
     setActiveMobileIndex(index);
   };
 
+  const triggerAdsterraAd = () => {
+    try {
+      const link = document.createElement('a');
+      link.href = '/adsterra.html';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Failed to trigger ad anchor:', e);
+    }
+  };
+
+  const handlePlanClick = (plan: PricingPlan) => {
+    // If already premium, let user know and provide option to re-test
+    if (isPremium) {
+      setStatusNotice('💎 8 თვე უფასო VIP უკვე გააქტიურებულია თქვენთვის! ყველა ფუნქცია გახსნილია.');
+      return;
+    }
+
+    // 1. First rule: Require registration
+    if (!currentUser) {
+      if (onRequireAuth) {
+        onRequireAuth('VIP პაკეტის გასააქტიურებლად გთხოვთ ჯერ გაიაროთ რეგისტრაცია (სახელი და ელ-ფოსტა)');
+      }
+      return;
+    }
+
+    // 2. Open Adsterra interactive modal & trigger ad
+    setAdModalPlan(plan);
+    setIsAdModalOpen(true);
+    triggerAdsterraAd();
+  };
+
+  const handleAdModalClick = () => {
+    if (!adModalPlan) return;
+
+    const currentClicks = planClicks[adModalPlan.id] || 0;
+
+    if (currentClicks === 0) {
+      // 1st click completed
+      setPlanClicks((prev) => ({ ...prev, [adModalPlan.id]: 1 }));
+      setStatusNotice('✅ 1-ლი კლიკი შესრულდა! დარჩა 1 კლიკი VIP-ის გასააქტიურებლად.');
+      // Keep modal open or let user click step 2
+    } else if (currentClicks >= 1) {
+      // 2nd click completed -> Activate 8 Months Free VIP!
+      setPlanClicks((prev) => ({ ...prev, [adModalPlan.id]: 2 }));
+      setIsAdModalOpen(false);
+      setStatusNotice('🎉 გილოცავთ! 8 თვე უფასო VIP წარმატებით გააქტიურდა!');
+
+      if (onActivateVIP) {
+        onActivateVIP();
+      }
+      if (onPlanSelected) {
+        onPlanSelected(adModalPlan);
+      }
+    }
+  };
+
+  const renderButtonContent = (plan: PricingPlan) => {
+    if (isPremium) {
+      return (
+        <span className="flex items-center justify-center gap-1.5">
+          <Zap className="w-3.5 h-3.5 fill-white" />
+          <span>💎 VIP აქტიურია (8 თვე უფასო)</span>
+        </span>
+      );
+    }
+
+    if (!currentUser) {
+      return (
+        <span className="flex items-center justify-center gap-1.5">
+          <UserPlus className="w-3.5 h-3.5" />
+          <span>რეგისტრაცია & 8 თვე უფასო VIP</span>
+        </span>
+      );
+    }
+
+    const clicks = planClicks[plan.id] || 0;
+
+    if (clicks === 1) {
+      return (
+        <span className="flex items-center justify-center gap-1.5 animate-pulse">
+          <ExternalLink className="w-3.5 h-3.5" />
+          <span>დარჩა 1 კლიკი! (დააჭირეთ კიდევ ერთხელ)</span>
+        </span>
+      );
+    }
+
+    return (
+      <span className="flex items-center justify-center gap-1.5">
+        <Zap className="w-3.5 h-3.5 fill-white" />
+        <span>8 თვე უფასო VIP-ის გააქტიურება</span>
+      </span>
+    );
+  };
+
   return (
     <section
       id="pricing"
@@ -123,18 +233,48 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Compact Header */}
         <div className="text-center max-w-xl mx-auto space-y-2 mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
-            <Sparkles className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-            <span>სატარიფო პაკეტები</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 text-[11px] font-bold uppercase tracking-wider">
+            <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <span>სპეციალური აქცია • 8 თვე უფასო VIP</span>
           </div>
 
           <h2 className="font-serif-geo text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight">
-            გადადით <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">Premium</span>-ზე
+            გადადით <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">8 თვე უფასო VIP</span>-ზე
           </h2>
 
           <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300">
-            გახსენით მზა თეფშის კალორიების დათვლა და შეფ-დიეტოლოგი სპორტული აქტივობით
+            გახსენით მზა თეფშის კალორიების დათვლა და შეფ-დიეტოლოგი სპორტული აქტივობით 0 დოლარად!
           </p>
+
+          {/* Status / helper notice banner */}
+          {statusNotice && (
+            <div className="mt-3 p-3 rounded-2xl bg-amber-500/15 border-2 border-amber-500 text-amber-950 dark:text-amber-200 text-xs font-bold animate-in fade-in flex items-center justify-between gap-2 text-left flex-wrap">
+              <span>{statusNotice}</span>
+              <div className="flex items-center gap-2">
+                {isPremium && onResetVIP && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onResetVIP();
+                      setPlanClicks({});
+                      setStatusNotice('VIP სტატუსი გასუფთავდა სატესტოდ. ახლა შეგიძლიათ შეამოწმოთ რეგისტრაცია და 2 კლიკი!');
+                    }}
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-stone-800 text-white font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>თავიდან გააქტიურება</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setStatusNotice(null)}
+                  className="text-[10px] px-2 py-0.5 rounded-lg bg-amber-500 text-white font-bold cursor-pointer"
+                >
+                  დახურვა
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Mobile View Mode Switcher Toggle (Slider vs 2x2 Grid) */}
           <div className="sm:hidden flex items-center justify-center pt-1">
@@ -180,15 +320,18 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                 className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-2 pt-4 px-2 no-scrollbar -mx-4 px-6 scroll-smooth"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {PRICING_PLANS.map((plan, index) => {
+                {PRICING_PLANS.map((plan) => {
                   const isBest = plan.isBestDeal;
                   const isPop = plan.isPopular;
+                  const clicks = planClicks[plan.id] || 0;
 
                   return (
                     <div
                       key={plan.id}
                       className={`w-[80vw] max-w-[280px] shrink-0 snap-center relative flex flex-col justify-between rounded-2xl p-4 sm:p-5 transition-all duration-300 ${
-                        isBest
+                        clicks === 1
+                          ? 'border-2 border-orange-500 bg-orange-50/50 dark:bg-stone-900 shadow-lg'
+                          : isBest
                           ? 'bg-gradient-to-b from-amber-500/15 via-orange-500/5 to-amber-500/20 dark:from-amber-950/50 dark:to-stone-900 border-2 border-amber-500 dark:border-amber-400 shadow-lg shadow-amber-900/15 ring-2 ring-amber-400/40'
                           : isPop
                           ? 'bg-white dark:bg-stone-850 border-2 border-amber-300 dark:border-amber-700 shadow-md'
@@ -196,22 +339,25 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                       }`}
                     >
                       {/* Top Badges */}
-                      {isBest && (
+                      {clicks === 1 ? (
+                        <div className="absolute -top-3 left-4 bg-orange-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
+                          <span>დარჩა 1 კლიკი!</span>
+                        </div>
+                      ) : isBest ? (
                         <div className="absolute -top-3 left-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
                           <Star className="w-2.5 h-2.5 fill-white" />
                           <span>BEST DEAL</span>
                         </div>
-                      )}
-                      {isPop && !isBest && (
+                      ) : isPop ? (
                         <div className="absolute -top-3 left-4 bg-stone-900 dark:bg-amber-600 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
                           POPULAR
                         </div>
-                      )}
+                      ) : null}
 
                       <div>
                         {/* Title & Savings */}
                         <div className="flex items-center justify-between gap-1 mb-1 mt-0.5">
-                          <h3 className="font-serif-geo text-lg font-bold text-stone-900 dark:text-stone-100">
+                          <h3 className="font-serif-geo text-base font-bold text-stone-900 dark:text-stone-100">
                             {plan.name}
                           </h3>
                           {plan.savingsBadge && (
@@ -224,7 +370,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                         {/* Price */}
                         <div className="mb-3 pb-2.5 border-b border-stone-100 dark:border-stone-800">
                           <div className="flex items-baseline gap-1">
-                            <span className="font-serif-geo text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                            <span className="font-serif-geo text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
                               {plan.price}
                             </span>
                             <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">
@@ -247,23 +393,26 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                         </ul>
                       </div>
 
-                      {/* Buy Button */}
-                      <a
-                        href={plan.checkoutUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => onPlanSelected && onPlanSelected(plan)}
-                        className={`lemonsqueezy-button w-full py-2.5 px-3 rounded-xl font-serif-geo text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${
-                          isBest
+                      {/* 2-Click Activate Button */}
+                      <button
+                        type="button"
+                        onClick={() => handlePlanClick(plan)}
+                        className={`w-full py-2.5 px-3 rounded-xl font-serif-geo text-xs font-bold transition-all cursor-pointer text-center ${
+                          isPremium
+                            ? 'bg-emerald-600 text-white'
+                            : !currentUser
+                            ? 'bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 text-white'
+                            : clicks === 1
+                            ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg animate-bounce'
+                            : isBest
                             ? 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white shadow-md shadow-amber-900/20 active:scale-[0.98]'
                             : isPop
                             ? 'bg-stone-900 dark:bg-amber-600 text-white shadow-xs'
-                            : 'bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 border border-stone-200 dark:border-stone-700'
+                            : 'bg-amber-500 hover:bg-amber-600 text-white'
                         }`}
                       >
-                        <span>{isBest ? 'ყიდვა (BEST DEAL)' : 'ყიდვა'}</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </a>
+                        {renderButtonContent(plan)}
+                      </button>
                     </div>
                   );
                 })}
@@ -317,16 +466,16 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
             <div className="grid grid-cols-2 gap-2.5 pt-3">
               {PRICING_PLANS.map((plan) => {
                 const isBest = plan.isBestDeal;
-                const isPop = plan.isPopular;
+                const clicks = planClicks[plan.id] || 0;
 
                 return (
                   <div
                     key={plan.id}
-                    className={`relative flex flex-col justify-between rounded-2xl p-3.5 transition-all ${
-                      isBest
-                        ? 'bg-gradient-to-b from-amber-500/15 to-amber-500/5 dark:from-amber-950/50 dark:to-stone-900 border-2 border-amber-500 dark:border-amber-400 shadow-md ring-1 ring-amber-400/40'
-                        : isPop
-                        ? 'bg-white dark:bg-stone-850 border border-amber-300 dark:border-amber-700 shadow-xs'
+                    className={`relative flex flex-col justify-between rounded-2xl p-3 text-left transition-all ${
+                      clicks === 1
+                        ? 'border-2 border-orange-500 bg-orange-50/50 shadow-md'
+                        : isBest
+                        ? 'bg-gradient-to-b from-amber-500/10 to-transparent border-2 border-amber-500 shadow-sm'
                         : 'bg-white dark:bg-stone-850 border border-stone-200 dark:border-stone-800'
                     }`}
                   >
@@ -338,43 +487,51 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
 
                     <div>
                       <div className="flex items-center justify-between mb-0.5">
-                        <h4 className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">
+                        <h4 className="font-serif-geo font-bold text-xs text-stone-900 dark:text-stone-100">
                           {plan.name}
                         </h4>
                         {plan.savingsBadge && (
-                          <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400">
+                          <span className="text-[8px] font-bold text-emerald-700 dark:text-emerald-400">
                             {plan.savingsBadge}
                           </span>
                         )}
                       </div>
 
                       <div className="flex items-baseline gap-0.5 my-1">
-                        <span className="font-serif-geo text-2xl font-black text-stone-900 dark:text-stone-100">
+                        <span className="font-serif-geo text-2xl font-black text-emerald-600 dark:text-emerald-400">
                           {plan.price}
                         </span>
-                        <span className="text-[10px] text-stone-500 dark:text-stone-400">
+                        <span className="text-[9px] text-stone-500 dark:text-stone-400">
                           {plan.period}
                         </span>
                       </div>
 
-                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 block mb-2">
+                      <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 block mb-2">
                         {plan.monthlyBreakdown}
                       </span>
                     </div>
 
-                    <a
-                      href={plan.checkoutUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => onPlanSelected && onPlanSelected(plan)}
-                      className={`lemonsqueezy-button w-full py-2 px-2 rounded-xl text-center font-serif-geo text-xs font-bold transition-all block ${
-                        isBest
+                    <button
+                      type="button"
+                      onClick={() => handlePlanClick(plan)}
+                      className={`w-full py-2 px-1.5 rounded-xl text-center font-serif-geo text-[11px] font-bold transition-all block cursor-pointer ${
+                        isPremium
+                          ? 'bg-emerald-600 text-white'
+                          : clicks === 1
+                          ? 'bg-orange-600 text-white animate-pulse'
+                          : isBest
                           ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xs'
-                          : 'bg-stone-900 dark:bg-stone-700 text-white'
+                          : 'bg-amber-500 hover:bg-amber-600 text-white'
                       }`}
                     >
-                      ყიდვა
-                    </a>
+                      {isPremium
+                        ? 'აქტიურია'
+                        : !currentUser
+                        ? 'რეგისტრაცია'
+                        : clicks === 1
+                        ? 'დარჩა 1 კლიკი!'
+                        : 'გააქტიურება'}
+                    </button>
                   </div>
                 );
               })}
@@ -389,12 +546,15 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
           {PRICING_PLANS.map((plan) => {
             const isBest = plan.isBestDeal;
             const isPop = plan.isPopular;
+            const clicks = planClicks[plan.id] || 0;
 
             return (
               <div
                 key={plan.id}
                 className={`relative flex flex-col justify-between rounded-3xl p-5 transition-all duration-300 ${
-                  isBest
+                  clicks === 1
+                    ? 'border-2 border-orange-500 bg-orange-50/40 dark:bg-stone-900 shadow-xl'
+                    : isBest
                     ? 'bg-gradient-to-b from-amber-500/10 via-orange-500/5 to-amber-500/15 dark:from-amber-950/40 dark:via-stone-900 dark:to-stone-900 border-2 border-amber-500 dark:border-amber-400 shadow-xl shadow-amber-900/10 ring-2 ring-amber-400/30 lg:-translate-y-1.5'
                     : isPop
                     ? 'bg-white dark:bg-stone-850 border-2 border-amber-300 dark:border-amber-800 shadow-md'
@@ -402,18 +562,20 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                 }`}
               >
                 {/* Badges */}
-                {isBest && (
+                {clicks === 1 ? (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md animate-pulse">
+                    დარჩა 1 კლიკი!
+                  </div>
+                ) : isBest ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md flex items-center gap-1">
                     <Star className="w-2.5 h-2.5 fill-white" />
                     <span>BEST DEAL</span>
                   </div>
-                )}
-
-                {isPop && !isBest && (
+                ) : isPop ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-stone-900 dark:bg-amber-600 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
                     POPULAR
                   </div>
-                )}
+                ) : null}
 
                 {/* Plan Content */}
                 <div>
@@ -435,7 +597,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                   {/* Price */}
                   <div className="mb-3 pb-3 border-b border-stone-100 dark:border-stone-800">
                     <div className="flex items-baseline gap-1">
-                      <span className="font-serif-geo text-3xl lg:text-4xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                      <span className="font-serif-geo text-3xl lg:text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
                         {plan.price}
                       </span>
                       <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">
@@ -458,43 +620,54 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                   </ul>
                 </div>
 
-                {/* Checkout Button */}
+                {/* 2-Click Activation Button */}
                 <div className="pt-1">
-                  <a
-                    href={plan.checkoutUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => onPlanSelected && onPlanSelected(plan)}
-                    className={`lemonsqueezy-button w-full py-2.5 px-3 rounded-xl font-serif-geo text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${
-                      isBest
+                  <button
+                    type="button"
+                    onClick={() => handlePlanClick(plan)}
+                    className={`w-full py-2.5 px-3 rounded-xl font-serif-geo text-xs font-bold transition-all cursor-pointer text-center ${
+                      isPremium
+                        ? 'bg-emerald-600 text-white'
+                        : !currentUser
+                        ? 'bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 text-white shadow-xs'
+                        : clicks === 1
+                        ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg animate-pulse hover:scale-[1.02]'
+                        : isBest
                         ? 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-700 hover:to-orange-700 text-white shadow-md shadow-amber-900/20 hover:scale-[1.02] active:scale-[0.98]'
                         : isPop
                         ? 'bg-stone-900 hover:bg-stone-800 dark:bg-amber-600 dark:hover:bg-amber-700 text-white shadow-xs hover:scale-[1.01]'
-                        : 'bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100 border border-stone-200 dark:border-stone-700 hover:border-amber-300'
+                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
                     }`}
                   >
-                    <span>
-                      {isBest ? 'არჩევა (BEST DEAL)' : 'პაკეტის არჩევა'}
-                    </span>
-                    <ArrowRight className="w-3 h-3" />
-                  </a>
+                    {renderButtonContent(plan)}
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Minimalist Security & Lemon Squeezy Note */}
+        {/* Free Access Guarantee Note */}
         <div className="mt-6 text-center max-w-lg mx-auto space-y-1 text-[11px] text-stone-500 dark:text-stone-400">
           <div className="flex items-center justify-center gap-1.5 text-stone-700 dark:text-stone-300 font-semibold">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Lemon Squeezy დაცული გადახდა (Visa, Mastercard, Apple/Google Pay)</span>
+            <span>მყისიერი გააქტიურება • 8 თვე 100%-ით უფასო VIP წვდომა ყველასთვის • ბარათი არ არის საჭირო</span>
           </div>
           <p>
-            მყისიერი აქტივაცია • გაუქმება ნებისმიერ დროს
+            რეგისტრაციის შემდეგ დააჭირეთ 2-ჯერ რეკლამის სანახავად და მიიღეთ სრული წვდომა 0 დოლარად!
           </p>
         </div>
       </div>
+
+      {/* Interactive Adsterra Ad Modal */}
+      {adModalPlan && (
+        <AdsterraAdModal
+          isOpen={isAdModalOpen}
+          onClose={() => setIsAdModalOpen(false)}
+          clickStep={(planClicks[adModalPlan.id] || 0) === 0 ? 1 : 2}
+          onAdClicked={handleAdModalClick}
+        />
+      )}
     </section>
   );
 };

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Language, TRANSLATIONS } from '../utils/i18n';
+import { UserAccount } from '../types/userAccount';
 import {
   Sparkles,
   CheckCircle2,
@@ -11,6 +12,8 @@ import {
   X,
   ShieldCheck,
   Zap,
+  UserPlus,
+  ExternalLink,
 } from 'lucide-react';
 
 interface PremiumModalProps {
@@ -20,6 +23,8 @@ interface PremiumModalProps {
   isPremium: boolean;
   onTogglePremium: (active: boolean) => void;
   onOpenDietPlan: () => void;
+  currentUser?: UserAccount | null;
+  onRequireAuth?: (reason: string) => void;
 }
 
 export const PremiumModal: React.FC<PremiumModalProps> = ({
@@ -29,10 +34,54 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
   isPremium,
   onTogglePremium,
   onOpenDietPlan,
+  currentUser,
+  onRequireAuth,
 }) => {
   const t = TRANSLATIONS[lang];
+  const [modalClicks, setModalClicks] = useState<Record<number, number>>({});
+  const [helperNotice, setHelperNotice] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const triggerAdsterraAd = () => {
+    try {
+      const link = document.createElement('a');
+      link.href = '/adsterra.html';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Failed to trigger ad:', e);
+    }
+  };
+
+  const handleCardClick = (tierIndex: number) => {
+    if (isPremium) return;
+
+    // 1. Must register first
+    if (!currentUser) {
+      onClose();
+      if (onRequireAuth) {
+        onRequireAuth('VIP პაკეტის გასააქტიურებლად გთხოვთ ჯერ გაიაროთ რეგისტრაცია');
+      }
+      return;
+    }
+
+    // 2. 2-click counter
+    const current = modalClicks[tierIndex] || 0;
+    if (current === 0) {
+      triggerAdsterraAd();
+      setModalClicks((prev) => ({ ...prev, [tierIndex]: 1 }));
+      setHelperNotice('Adsterra-ს რეკლამა გაიხსნა. დარჩა 1 კლიკი VIP-ის გასააქტიურებლად!');
+    } else if (current === 1) {
+      triggerAdsterraAd();
+      setModalClicks((prev) => ({ ...prev, [tierIndex]: 2 }));
+      onTogglePremium(true);
+      onClose();
+    }
+  };
 
   const features = [
     {
@@ -74,13 +123,13 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
         <div className="relative p-6 sm:p-7 bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 text-white overflow-hidden">
           <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/10 blur-2xl pointer-events-none" />
           <div className="absolute right-4 bottom-2 text-white/10 text-8xl font-serif-geo font-black select-none pointer-events-none">
-            $5
+            VIP
           </div>
 
           <div className="flex items-center justify-between relative z-10 mb-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider border border-white/30">
               <Sparkles className="w-3.5 h-3.5" />
-              {t.premiumBadge}
+              8 თვე უფასო VIP
             </span>
 
             <button
@@ -93,16 +142,16 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
           </div>
 
           <h3 className="font-serif-geo text-2xl sm:text-3xl font-extrabold tracking-tight relative z-10">
-            {t.premiumTitle}
+            8 თვე უფასო VIP
           </h3>
           <p className="text-xs sm:text-sm text-amber-100 mt-1 max-w-sm leading-relaxed relative z-10">
-            {t.premiumSubtitle}
+            სრული კულინარიული და კლინიკური დიეტოლოგიური პაკეტი 0 დოლარად!
           </p>
 
           <div className="mt-4 flex items-baseline gap-2 relative z-10">
-            <span className="text-3xl sm:text-4xl font-extrabold font-serif-geo">Upgrade to Premium</span>
-            <span className="ml-auto px-2.5 py-1 rounded-lg bg-white/20 text-xs font-bold text-white border border-white/30">
-              4 მოქნილი პაკეტი
+            <span className="text-3xl sm:text-4xl font-extrabold font-serif-geo">8 თვე უფასო VIP</span>
+            <span className="ml-auto px-2.5 py-1 rounded-lg bg-emerald-500/80 text-xs font-bold text-white border border-white/30">
+              100% უფასო
             </span>
           </div>
         </div>
@@ -141,93 +190,143 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
             </div>
           ) : null}
 
+          {/* Helper Notice if active */}
+          {helperNotice && (
+            <div className="p-3 rounded-2xl bg-amber-500/15 border-2 border-amber-500 text-amber-950 dark:text-amber-200 text-xs font-bold animate-in fade-in flex items-center justify-between gap-2">
+              <span>{helperNotice}</span>
+              <button
+                type="button"
+                onClick={() => setHelperNotice(null)}
+                className="text-[10px] px-2 py-0.5 rounded-lg bg-amber-500 text-white font-bold cursor-pointer"
+              >
+                დახურვა
+              </button>
+            </div>
+          )}
+
           {/* 4 Pricing Tiers Selection Grid */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-              აირჩიეთ სასურველი პაკეტი (Lemon Squeezy):
+              აირჩიეთ სასურველი პაკეტი (8 თვე უფასო VIP):
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* 1 Month */}
+              {/* 1 */}
               <div className="p-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/60 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">1 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$3.50</span>
+                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
+                    <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">1 Month Access (~9.50 GEL)</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">0₾ • 8 თვე უფასო წვდომა</p>
                 </div>
-                <a
-                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/9649c076-de24-4be1-8e49-1f4a781c1b3c"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-bold transition-all"
+                <button
+                  type="button"
+                  onClick={() => handleCardClick(0)}
+                  className={`w-full text-center py-2 px-3 rounded-xl text-white text-xs font-bold transition-all cursor-pointer ${
+                    !currentUser
+                      ? 'bg-stone-900 hover:bg-stone-800'
+                      : modalClicks[0] === 1
+                      ? 'bg-gradient-to-r from-orange-600 to-amber-600 shadow-md animate-pulse'
+                      : 'bg-amber-500 hover:bg-amber-600'
+                  }`}
                 >
-                  ყიდვა ($3.50)
-                </a>
+                  {!currentUser
+                    ? 'რეგისტრაცია & VIP'
+                    : modalClicks[0] === 1
+                    ? 'დარჩა 1 კლიკი!'
+                    : '8 თვე უფასო VIP-ის გააქტიურება'}
+                </button>
               </div>
 
-              {/* 2 Months */}
+              {/* 2 */}
               <div className="p-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/60 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">2 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$4.50</span>
+                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
+                    <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$2.25/თვეში (~12.15 GEL)</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">0₾ • კლინიკური დიეტოლოგია</p>
                 </div>
-                <a
-                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/6176674f-fac2-40ae-afc4-f5e64ce198d0"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-bold transition-all"
+                <button
+                  type="button"
+                  onClick={() => handleCardClick(1)}
+                  className={`w-full text-center py-2 px-3 rounded-xl text-white text-xs font-bold transition-all cursor-pointer ${
+                    !currentUser
+                      ? 'bg-stone-900 hover:bg-stone-800'
+                      : modalClicks[1] === 1
+                      ? 'bg-gradient-to-r from-orange-600 to-amber-600 shadow-md animate-pulse'
+                      : 'bg-amber-500 hover:bg-amber-600'
+                  }`}
                 >
-                  ყიდვა ($4.50)
-                </a>
+                  {!currentUser
+                    ? 'რეგისტრაცია & VIP'
+                    : modalClicks[1] === 1
+                    ? 'დარჩა 1 კლიკი!'
+                    : '8 თვე უფასო VIP-ის გააქტიურება'}
+                </button>
               </div>
 
-              {/* 3 Months */}
+              {/* 3 */}
               <div className="p-4 rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50/50 dark:bg-stone-800/80 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">3 თვე</span>
+                      <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
                       <span className="text-[9px] bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 px-1.5 py-0.2 rounded font-bold">POPULAR</span>
                     </div>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$5.50</span>
+                    <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">$1.83/თვეში (~14.85 GEL)</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">0₾ • სპორტული & TDEE რეჟიმი</p>
                 </div>
-                <a
-                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/624b09cc-7019-4154-9f16-4d9028e2b2ab"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-amber-600 dark:hover:bg-amber-700 text-white text-xs font-bold transition-all"
+                <button
+                  type="button"
+                  onClick={() => handleCardClick(2)}
+                  className={`w-full text-center py-2 px-3 rounded-xl text-white text-xs font-bold transition-all cursor-pointer ${
+                    !currentUser
+                      ? 'bg-stone-900 hover:bg-stone-800'
+                      : modalClicks[2] === 1
+                      ? 'bg-gradient-to-r from-orange-600 to-amber-600 shadow-md animate-pulse'
+                      : 'bg-stone-900 hover:bg-stone-800 dark:bg-amber-600'
+                  }`}
                 >
-                  ყიდვა ($5.50)
-                </a>
+                  {!currentUser
+                    ? 'რეგისტრაცია & VIP'
+                    : modalClicks[2] === 1
+                    ? 'დარჩა 1 კლიკი!'
+                    : '8 თვე უფასო VIP-ის გააქტიურება'}
+                </button>
               </div>
 
-              {/* 6 Months - BEST DEAL */}
+              {/* 4 */}
               <div className="relative p-4 rounded-2xl border-2 border-amber-500 dark:border-amber-500 bg-gradient-to-b from-amber-500/15 via-orange-500/10 to-amber-500/15 dark:from-amber-950/40 dark:to-stone-850 shadow-md flex flex-col justify-between">
                 <div className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
                   BEST DEAL
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">6 თვე</span>
-                    <span className="font-serif-geo text-lg font-black text-amber-700 dark:text-amber-400">$6.50</span>
+                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
+                    <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
                   </div>
-                  <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-3">$1.08/თვეში (~17.55 GEL)</p>
+                  <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-3">0₾ • All-in-One სრული წვდომა</p>
                 </div>
-                <a
-                  href="https://mikvebe.lemonsqueezy.com/checkout/buy/9b4bb471-32d1-436e-9693-09272b66d055"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="lemonsqueezy-button block text-center py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-bold shadow-xs transition-all"
+                <button
+                  type="button"
+                  onClick={() => handleCardClick(3)}
+                  className={`w-full text-center py-2 px-3 rounded-xl text-white text-xs font-bold shadow-xs transition-all cursor-pointer ${
+                    !currentUser
+                      ? 'bg-stone-900 hover:bg-stone-800'
+                      : modalClicks[3] === 1
+                      ? 'bg-gradient-to-r from-orange-600 to-amber-600 shadow-lg animate-pulse'
+                      : 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700'
+                  }`}
                 >
-                  ყიდვა ($6.50) • BEST DEAL
-                </a>
+                  {!currentUser
+                    ? 'რეგისტრაცია & VIP'
+                    : modalClicks[3] === 1
+                    ? 'დარჩა 1 კლიკი!'
+                    : '8 თვე უფასო VIP-ის გააქტიურება • BEST DEAL'}
+                </button>
               </div>
             </div>
           </div>

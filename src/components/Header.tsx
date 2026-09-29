@@ -125,12 +125,12 @@ export const Header: React.FC<HeaderProps> = ({
               {isPremium ? (
                 <>
                   <span className="xs:hidden">VIP</span>
-                  <span className="hidden xs:inline">💎 VIP Active</span>
+                  <span className="hidden xs:inline">💎 VIP აქტიურია</span>
                 </>
               ) : (
                 <>
-                  <span className="xs:hidden">Upgrade</span>
-                  <span className="hidden xs:inline">Upgrade to Premium</span>
+                  <span className="xs:hidden">8 თვე VIP</span>
+                  <span className="hidden xs:inline">8 თვე უფასო VIP</span>
                 </>
               )}
             </span>

@@ -23,6 +23,7 @@ import { LanguageSelectionModal } from './components/LanguageSelectionModal';
 import { PremiumModal } from './components/PremiumModal';
 import { PremiumSection } from './components/PremiumSection';
 import { PricingSection } from './components/PricingSection';
+import { AdsterraBanner } from './components/AdsterraBanner';
 import {
   CookingMethodSelector,
   CookingMethodFilter,
@@ -90,24 +91,54 @@ export default function App() {
     }
   }, [isDark]);
 
-  // Premium state ($5/month All-in-One Premium) - starts locked on initial entrance as requested
+  // Premium state (8 Months Free VIP)
   const [isPremium, setIsPremium] = useState<boolean>(() => {
-    return sessionStorage.getItem(STORAGE_PREMIUM_KEY) === 'true';
+    return (
+      sessionStorage.getItem(STORAGE_PREMIUM_KEY) === 'true' ||
+      localStorage.getItem(STORAGE_PREMIUM_KEY) === 'true'
+    );
   });
   const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
+  const [accountModalMode, setAccountModalMode] = useState<'login' | 'register'>('login');
+  const [authPromptReason, setAuthPromptReason] = useState<string | undefined>(undefined);
+  const [vipCelebrationToast, setVipCelebrationToast] = useState<string | null>(null);
 
   const handleTogglePremium = (active: boolean) => {
     setIsPremium(active);
     sessionStorage.setItem(STORAGE_PREMIUM_KEY, active ? 'true' : 'false');
+    localStorage.setItem(STORAGE_PREMIUM_KEY, active ? 'true' : 'false');
+    if (active) {
+      setVipCelebrationToast('🎉 გილოცავთ! 8 თვე უფასო VIP წარმატებით გააქტიურდა!');
+      setTimeout(() => {
+        setVipCelebrationToast(null);
+      }, 7000);
+    }
+  };
+
+  const handleRequireAuthForVIP = (reason: string) => {
+    setAccountModalMode('register');
+    setAuthPromptReason(reason);
+    setShowAccountModal(true);
   };
 
   const handleOpenPricing = () => {
+    if (!currentUser) {
+      handleRequireAuthForVIP('VIP პაკეტის გასააქტიურებლად გთხოვთ ჯერ გაიაროთ რეგისტრაცია (სახელი და ელ-ფოსტა)');
+      return;
+    }
     const el = document.getElementById('pricing');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      setShowPremiumModal(true);
     }
+    setShowPremiumModal(true);
+  };
+
+  const handleResetVIP = () => {
+    setIsPremium(false);
+    sessionStorage.removeItem(STORAGE_PREMIUM_KEY);
+    localStorage.removeItem(STORAGE_PREMIUM_KEY);
+    setVipCelebrationToast('🔄 VIP სტატუსი გასუფთავდა სატესტოდ. ახლა შეგიძლიათ თავიდან შეამოწმოთ რეგისტრაცია და 2 კლიკი!');
+    setTimeout(() => setVipCelebrationToast(null), 5000);
   };
 
   const handleSelectLanguage = (selectedLang: Language) => {
@@ -493,9 +524,34 @@ export default function App() {
           setSelectedPlanForModal(null);
           setShowDietPlanModal(true);
         }}
-        onOpenAccount={() => setShowAccountModal(true)}
+        onOpenAccount={() => {
+          setAccountModalMode('login');
+          setAuthPromptReason(undefined);
+          setShowAccountModal(true);
+        }}
         onOpenFeedback={() => setShowFeedbackModal(true)}
       />
+
+      {/* Sticky VIP Celebration / Info Toast Banner */}
+      {vipCelebrationToast && (
+        <div className="sticky top-15 sm:top-16 z-40 max-w-4xl mx-auto px-4 py-2 animate-in slide-in-from-top-4 duration-300">
+          <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white p-3.5 rounded-2xl shadow-xl border-2 border-amber-300 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl animate-bounce">💎</span>
+              <p className="font-serif-geo font-bold text-xs sm:text-sm">
+                {vipCelebrationToast}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setVipCelebrationToast(null)}
+              className="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold cursor-pointer transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-12">
@@ -830,11 +886,19 @@ export default function App() {
           </div>
         )}
 
-        {/* Feature: Modern Minimalist Pricing Section (4 tiers: 1m: $3.50, 2m: $4.50, 3m: $5.50, 6m: $6.50 BEST DEAL) */}
+        {/* Adsterra Advertisement Banner (728x90) */}
+        <AdsterraBanner />
+
+        {/* Feature: 8 Months Free VIP Section (All 4 tiers: $0, 8 თვე უფასო VIP) */}
         <PricingSection
           className="border-t-2 border-amber-300/70 dark:border-stone-800"
-          onPlanSelected={(plan) => {
-            console.log('Selected Lemon Squeezy tier:', plan.id);
+          currentUser={currentUser}
+          onRequireAuth={handleRequireAuthForVIP}
+          isPremium={isPremium}
+          onActivateVIP={() => handleTogglePremium(true)}
+          onResetVIP={handleResetVIP}
+          onPlanSelected={() => {
+            handleTogglePremium(true);
           }}
         />
 
@@ -856,6 +920,7 @@ export default function App() {
           <PremiumSection
             isPremium={isPremium}
             onTogglePremium={handleTogglePremium}
+            onStartVipFlow={handleOpenPricing}
             onOpenDietPlan={() => {
               setSelectedPlanForModal(null);
               setDietPlanInitialParams(null);
@@ -901,12 +966,14 @@ export default function App() {
         onClose={() => setShowLangModal(false)}
       />
 
-      {/* Premium Upgrade Modal ($5/month) */}
+      {/* Premium Upgrade Modal (8 Months Free VIP) */}
       <PremiumModal
         isOpen={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         lang={lang}
         isPremium={isPremium}
+        currentUser={currentUser}
+        onRequireAuth={handleRequireAuthForVIP}
         onTogglePremium={handleTogglePremium}
         onOpenDietPlan={() => setShowDietPlanModal(true)}
       />
@@ -958,15 +1025,27 @@ export default function App() {
 
       <UserAccountModal
         isOpen={showAccountModal}
-        onClose={() => setShowAccountModal(false)}
+        onClose={() => {
+          setShowAccountModal(false);
+          setAuthPromptReason(undefined);
+        }}
         currentUser={currentUser}
+        initialMode={accountModalMode}
+        promptReason={authPromptReason}
         savedPlans={savedDietPlans}
         onSelectPlan={(plan) => {
           setSelectedPlanForModal(plan);
           setShowDietPlanModal(true);
         }}
         onDeletePlan={handleDeleteDietPlan}
-        onLoginOrRegister={handleLoginOrRegister}
+        onLoginOrRegister={(userData) => {
+          handleLoginOrRegister(userData);
+          if (authPromptReason) {
+            setAuthPromptReason(undefined);
+            setVipCelebrationToast('✅ რეგისტრაცია გავლილია! ახლა დააჭირეთ VIP ღილაკს 2-ჯერ რეკლამის სანახავად და გასააქტიურებლად.');
+            setTimeout(() => setVipCelebrationToast(null), 7000);
+          }
+        }}
         onLogout={handleLogout}
       />
 

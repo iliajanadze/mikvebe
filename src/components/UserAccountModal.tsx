@@ -27,6 +27,8 @@ interface UserAccountModalProps {
   onDeletePlan: (planId: string) => void;
   onLoginOrRegister: (userData: { name: string; email: string }) => void;
   onLogout: () => void;
+  initialMode?: 'login' | 'register';
+  promptReason?: string;
 }
 
 export const UserAccountModal: React.FC<UserAccountModalProps> = ({
@@ -38,10 +40,18 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
   onDeletePlan,
   onLoginOrRegister,
   onLogout,
+  initialMode = 'login',
+  promptReason,
 }) => {
   const [nameInput, setNameInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [isRegisterMode, setIsRegisterMode] = useState(initialMode === 'register');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsRegisterMode(initialMode === 'register');
+    }
+  }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
 
@@ -93,6 +103,25 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
           {currentUser ? (
             /* Logged in state */
             <div className="space-y-6">
+              {promptReason && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-amber-500/15 to-emerald-500/20 border-2 border-emerald-500 text-stone-900 text-xs font-bold flex items-center justify-between gap-2.5 animate-in fade-in">
+                  <div>
+                    <p className="text-emerald-950 font-black">თქვენ უკვე შესული ხართ როგორც: {currentUser.name}</p>
+                    <p className="text-[11px] font-normal text-stone-600 mt-0.5">ახლა შეგიძლიათ დააჭიროთ VIP პაკეტს და გაიაროთ 2-კლიკიანი Adsterra გააქტიურება!</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer shrink-0"
+                  >
+                    VIP პაკეტები →
+                  </button>
+                </div>
+              )}
+
               {/* Account badge banner */}
               <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -198,6 +227,16 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
           ) : (
             /* Log in / Register form */
             <div className="space-y-4">
+              {promptReason && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 border-2 border-amber-400 text-stone-900 text-xs font-bold flex items-center gap-2.5 animate-in fade-in">
+                  <span className="text-xl">⭐</span>
+                  <div>
+                    <p className="text-amber-950 font-black">{promptReason}</p>
+                    <p className="text-[11px] font-normal text-stone-600 mt-0.5">შეავსეთ სახელი და ელ-ფოსტა 8 თვე უფასო VIP-ის მისაღებად.</p>
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-amber-950 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-amber-600" />

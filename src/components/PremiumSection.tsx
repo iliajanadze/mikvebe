@@ -26,6 +26,7 @@ interface PremiumSectionProps {
   isPremium: boolean;
   onTogglePremium: (active: boolean) => void;
   onOpenDietPlan: () => void;
+  onStartVipFlow?: () => void;
   onOpenDietPlanWithParams?: (params: {
     age: number;
     gender: 'ქალი' | 'კაცი';
@@ -133,6 +134,7 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
   isPremium,
   onTogglePremium,
   onOpenDietPlan,
+  onStartVipFlow,
   onOpenDietPlanWithParams,
 }) => {
   const [activeTab, setActiveTab] = useState<'plate_calories' | 'dietitian_sports'>('plate_calories');
@@ -391,11 +393,17 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
           <div className="pt-2 space-y-2">
             <button
               type="button"
-              onClick={() => onTogglePremium(true)}
+              onClick={() => {
+                if (onStartVipFlow) {
+                  onStartVipFlow();
+                } else {
+                  onTogglePremium(true);
+                }
+              }}
               className="px-8 py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-700 hover:to-orange-700 text-white rounded-2xl font-serif-geo font-bold text-sm sm:text-base shadow-xl shadow-amber-900/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer inline-flex items-center gap-2.5"
             >
               <Zap className="w-5 h-5 fill-white" />
-              <span>გააქტიურება — ფუნქციების გახსნა</span>
+              <span>8 თვე უფასო VIP-ის გააქტიურება</span>
               <Sparkles className="w-4 h-4 text-amber-200" />
             </button>
 
@@ -404,7 +412,7 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
               onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
               className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline block mx-auto cursor-pointer"
             >
-              სატარიფო პაკეტების ნახვა (1, 2, 3 და 6 თვე) →
+              8 თვე უფასო VIP პაკეტების ნახვა →
             </button>
           </div>
         </div>
