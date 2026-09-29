@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Check, Sparkles, ShieldCheck, Star, ChevronLeft, ChevronRight, LayoutGrid, SlidersHorizontal, Zap, UserPlus, ExternalLink, RotateCcw } from 'lucide-react';
+import { Check, Sparkles, ShieldCheck, Star, ChevronLeft, ChevronRight, LayoutGrid, SlidersHorizontal, Zap, UserPlus, ExternalLink } from 'lucide-react';
 import { UserAccount } from '../types/userAccount';
 import { AdsterraAdModal } from './AdsterraAdModal';
 
@@ -246,33 +246,11 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
             გახსენით მზა თეფშის კალორიების დათვლა და შეფ-დიეტოლოგი სპორტული აქტივობით 0 დოლარად!
           </p>
 
-          {/* Status / helper notice banner */}
-          {statusNotice && (
-            <div className="mt-3 p-3 rounded-2xl bg-amber-500/15 border-2 border-amber-500 text-amber-950 dark:text-amber-200 text-xs font-bold animate-in fade-in flex items-center justify-between gap-2 text-left flex-wrap">
-              <span>{statusNotice}</span>
-              <div className="flex items-center gap-2">
-                {isPremium && onResetVIP && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onResetVIP();
-                      setPlanClicks({});
-                      setStatusNotice('VIP სტატუსი გასუფთავდა სატესტოდ. ახლა შეგიძლიათ შეამოწმოთ რეგისტრაცია და 2 კლიკი!');
-                    }}
-                    className="text-[10px] px-2.5 py-1 rounded-lg bg-stone-800 text-white font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>თავიდან გააქტიურება</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setStatusNotice(null)}
-                  className="text-[10px] px-2 py-0.5 rounded-lg bg-amber-500 text-white font-bold cursor-pointer"
-                >
-                  დახურვა
-                </button>
-              </div>
+          {/* Status / celebration notice banner without buttons */}
+          {(statusNotice || isPremium) && (
+            <div className="mt-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-2 border-amber-400 dark:border-amber-500/80 text-amber-950 dark:text-amber-200 text-xs sm:text-sm font-bold animate-in fade-in flex items-center justify-center gap-2 text-center shadow-xs">
+              <span className="text-lg">🎉</span>
+              <span>{statusNotice || 'გილოცავთ! 8 თვე უფასო VIP წარმატებით გააქტიურდა!'}</span>
             </div>
           )}
 
