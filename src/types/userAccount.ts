@@ -4,7 +4,8 @@ export interface UserAccount {
   email: string;
   avatarSeed?: string;
   createdAt: string;
-  membershipStatus: 'უფასო' | 'პრემიუმ (აქტიური)';
+  membershipStatus: string; // e.g. '5 თვე უფასო VIP' | 'უფასო' | 'პრემიუმ (აქტიური)'
+  isPremium?: boolean;
   savedPlanIds: string[];
 }
 

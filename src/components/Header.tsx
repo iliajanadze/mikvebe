@@ -129,8 +129,8 @@ export const Header: React.FC<HeaderProps> = ({
                 </>
               ) : (
                 <>
-                  <span className="xs:hidden">8 თვე VIP</span>
-                  <span className="hidden xs:inline">8 თვე უფასო VIP</span>
+                  <span className="xs:hidden">5 თვე VIP</span>
+                  <span className="hidden xs:inline">5 თვე უფასო VIP</span>
                 </>
               )}
             </span>

@@ -59,6 +59,7 @@ const STORAGE_PREMIUM_KEY = 'mikvebe_is_premium';
 const STORAGE_SAVED_RECIPES_KEY = 'ai_chef_saved_recipes_v1';
 const STORAGE_USER_ACCOUNT_KEY = 'mikvebe_user_account_v1';
 const STORAGE_SAVED_PLANS_KEY = 'mikvebe_saved_diet_plans_v1';
+const STORAGE_ACCOUNTS_DB_KEY = 'mikvebe_registered_accounts_db_v1';
 
 export default function App() {
   // Language state (defaults to Georgian if unset, opens language picker on first load)
@@ -91,28 +92,97 @@ export default function App() {
     }
   }, [isDark]);
 
-  // Premium state (8 Months Free VIP)
+  // Premium state (5 Months Free VIP) - strictly synced with localStorage & user account
   const [isPremium, setIsPremium] = useState<boolean>(() => {
+    try {
+      const storedUser = localStorage.getItem(STORAGE_USER_ACCOUNT_KEY);
+      if (storedUser) {
+        const u = JSON.parse(storedUser);
+        if (
+          u.isPremium ||
+          u.membershipStatus === '5 თვე უფასო VIP' ||
+          u.membershipStatus === 'პრემიუმ (აქტიური)' ||
+          u.membershipStatus === '8 თვე უფასო VIP'
+        ) {
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read user VIP status:', e);
+    }
     return (
       sessionStorage.getItem(STORAGE_PREMIUM_KEY) === 'true' ||
       localStorage.getItem(STORAGE_PREMIUM_KEY) === 'true'
     );
   });
+
   const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
   const [accountModalMode, setAccountModalMode] = useState<'login' | 'register'>('login');
   const [authPromptReason, setAuthPromptReason] = useState<string | undefined>(undefined);
   const [vipCelebrationToast, setVipCelebrationToast] = useState<string | null>(null);
 
+  // User Account state
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_USER_ACCOUNT_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Normalize membership status if needed
+        if (parsed.isPremium && parsed.membershipStatus !== '5 თვე უფასო VIP') {
+          parsed.membershipStatus = '5 თვე უფასო VIP';
+        }
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
   const handleTogglePremium = (active: boolean) => {
     setIsPremium(active);
     sessionStorage.setItem(STORAGE_PREMIUM_KEY, active ? 'true' : 'false');
     localStorage.setItem(STORAGE_PREMIUM_KEY, active ? 'true' : 'false');
+
     if (active) {
-      setVipCelebrationToast('🎉 გილოცავთ! 8 თვე უფასო VIP წარმატებით გააქტიურდა!');
+      setVipCelebrationToast('🎉 გილოცავთ! 5 თვე უფასო VIP წარმატებით გააქტიურდა!');
       setTimeout(() => {
         setVipCelebrationToast(null);
       }, 7000);
     }
+
+    // CRITICAL: Ensure VIP is remembered on currentUser AND in accounts database!
+    setCurrentUser((prev) => {
+      const current = prev || {
+        id: `MIK-${Math.floor(10000 + Math.random() * 90000)}`,
+        name: 'VIP მომხმარებელი',
+        email: 'user@mikvebe.ge',
+        createdAt: new Date().toISOString(),
+        savedPlanIds: [],
+        membershipStatus: active ? '5 თვე უფასო VIP' : 'უფასო',
+        isPremium: active,
+      };
+
+      const updated: UserAccount = {
+        ...current,
+        isPremium: active,
+        membershipStatus: active ? '5 თვე უფასო VIP' : 'უფასო',
+      };
+
+      try {
+        localStorage.setItem(STORAGE_USER_ACCOUNT_KEY, JSON.stringify(updated));
+        if (updated.email) {
+          const storedDb = localStorage.getItem(STORAGE_ACCOUNTS_DB_KEY);
+          const accountsDb = storedDb ? JSON.parse(storedDb) : {};
+          accountsDb[updated.email.trim().toLowerCase()] = updated;
+          localStorage.setItem(STORAGE_ACCOUNTS_DB_KEY, JSON.stringify(accountsDb));
+        }
+      } catch (err) {
+        console.warn('Failed to persist VIP to account:', err);
+      }
+
+      return updated;
+    });
   };
 
   const handleRequireAuthForVIP = (reason: string) => {
@@ -137,8 +207,26 @@ export default function App() {
     setIsPremium(false);
     sessionStorage.removeItem(STORAGE_PREMIUM_KEY);
     localStorage.removeItem(STORAGE_PREMIUM_KEY);
-    setVipCelebrationToast('🔄 VIP სტატუსი გასუფთავდა სატესტოდ. ახლა შეგიძლიათ თავიდან შეამოწმოთ რეგისტრაცია და 2 კლიკი!');
-    setTimeout(() => setVipCelebrationToast(null), 5000);
+    setCurrentUser((prev) => {
+      if (!prev) return null;
+      const updated: UserAccount = {
+        ...prev,
+        isPremium: false,
+        membershipStatus: 'უფასო',
+      };
+      try {
+        localStorage.setItem(STORAGE_USER_ACCOUNT_KEY, JSON.stringify(updated));
+        if (updated.email) {
+          const storedDb = localStorage.getItem(STORAGE_ACCOUNTS_DB_KEY);
+          const accountsDb = storedDb ? JSON.parse(storedDb) : {};
+          accountsDb[updated.email.trim().toLowerCase()] = updated;
+          localStorage.setItem(STORAGE_ACCOUNTS_DB_KEY, JSON.stringify(accountsDb));
+        }
+      } catch {}
+      return updated;
+    });
+    setVipCelebrationToast('🔄 VIP სტატუსი გასუფთავდა სატესტოდ.');
+    setTimeout(() => setVipCelebrationToast(null), 4000);
   };
 
   const handleSelectLanguage = (selectedLang: Language) => {
@@ -164,16 +252,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<ChefAnalysisResult | null>(null);
   const [seenRecipeTitles, setSeenRecipeTitles] = useState<string[]>([]);
-
-  // User Account state
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_USER_ACCOUNT_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
 
   // Saved 1-month diet plans
   const [savedDietPlans, setSavedDietPlans] = useState<FullMonthDietPlan[]>(() => {
@@ -221,11 +299,15 @@ export default function App() {
     }
   }, [savedRecipes]);
 
-  // Save user account to localStorage
+  // Save user account to localStorage and sync VIP state
   useEffect(() => {
     try {
       if (currentUser) {
         localStorage.setItem(STORAGE_USER_ACCOUNT_KEY, JSON.stringify(currentUser));
+        if (currentUser.isPremium || currentUser.membershipStatus === '5 თვე უფასო VIP') {
+          setIsPremium(true);
+          localStorage.setItem(STORAGE_PREMIUM_KEY, 'true');
+        }
       } else {
         localStorage.removeItem(STORAGE_USER_ACCOUNT_KEY);
       }
@@ -253,14 +335,16 @@ export default function App() {
 
     if (!currentUser) {
       const randomId = `MIK-${Math.floor(10000 + Math.random() * 90000)}`;
-      setCurrentUser({
+      const newAcc: UserAccount = {
         id: randomId,
         name: 'ჩემი ანგარიში',
         email: 'user@mikvebe.ge',
         createdAt: new Date().toISOString(),
-        membershipStatus: isPremium ? 'პრემიუმ (აქტიური)' : 'უფასო',
+        membershipStatus: isPremium ? '5 თვე უფასო VIP' : 'უფასო',
+        isPremium: isPremium,
         savedPlanIds: [plan.id],
-      });
+      };
+      setCurrentUser(newAcc);
     } else {
       setCurrentUser((prev) =>
         prev
@@ -281,16 +365,65 @@ export default function App() {
   };
 
   const handleLoginOrRegister = (userData: { name: string; email: string }) => {
-    const id = `MIK-${Math.floor(10000 + Math.random() * 90000)}`;
-    const newAccount: UserAccount = {
-      id,
-      name: userData.name,
-      email: userData.email,
-      createdAt: new Date().toISOString(),
-      membershipStatus: isPremium ? 'პრემიუმ (აქტიური)' : 'უფასო',
-      savedPlanIds: savedDietPlans.map((p) => p.id),
-    };
-    setCurrentUser(newAccount);
+    const cleanEmail = userData.email.trim().toLowerCase();
+    let accountsDb: Record<string, UserAccount> = {};
+    try {
+      const storedDb = localStorage.getItem(STORAGE_ACCOUNTS_DB_KEY);
+      if (storedDb) {
+        accountsDb = JSON.parse(storedDb);
+      }
+    } catch (e) {
+      console.warn('Failed reading accounts DB:', e);
+    }
+
+    const existingAccount = accountsDb[cleanEmail];
+    let finalAccount: UserAccount;
+
+    if (existingAccount) {
+      // Existing user logging in
+      const hasVip =
+        isPremium ||
+        existingAccount.isPremium ||
+        existingAccount.membershipStatus === '5 თვე უფასო VIP' ||
+        existingAccount.membershipStatus === 'პრემიუმ (აქტიური)' ||
+        existingAccount.membershipStatus === '8 თვე უფასო VIP';
+
+      finalAccount = {
+        ...existingAccount,
+        name: userData.name || existingAccount.name,
+        email: userData.email,
+        isPremium: hasVip,
+        membershipStatus: hasVip ? '5 თვე უფასო VIP' : 'უფასო',
+      };
+
+      if (hasVip) {
+        setIsPremium(true);
+        localStorage.setItem(STORAGE_PREMIUM_KEY, 'true');
+        sessionStorage.setItem(STORAGE_PREMIUM_KEY, 'true');
+      }
+    } else {
+      // New user registering
+      const id = `MIK-${Math.floor(10000 + Math.random() * 90000)}`;
+      finalAccount = {
+        id,
+        name: userData.name,
+        email: userData.email,
+        createdAt: new Date().toISOString(),
+        membershipStatus: isPremium ? '5 თვე უფასო VIP' : 'უფასო',
+        isPremium: isPremium,
+        savedPlanIds: savedDietPlans.map((p) => p.id),
+      };
+    }
+
+    accountsDb[cleanEmail] = finalAccount;
+    try {
+      localStorage.setItem(STORAGE_ACCOUNTS_DB_KEY, JSON.stringify(accountsDb));
+      localStorage.setItem(STORAGE_USER_ACCOUNT_KEY, JSON.stringify(finalAccount));
+    } catch (e) {
+      console.warn('Failed saving accounts DB:', e);
+    }
+
+    setCurrentUser(finalAccount);
   };
 
   const handleLogout = () => {
@@ -889,7 +1022,7 @@ export default function App() {
         {/* Adsterra Advertisement Banner (728x90) */}
         <AdsterraBanner />
 
-        {/* Feature: 8 Months Free VIP Section (All 4 tiers: $0, 8 თვე უფასო VIP) */}
+        {/* Feature: 5 Months Free VIP Section (All 4 tiers: $0, 5 თვე უფასო VIP) */}
         <PricingSection
           className="border-t-2 border-amber-300/70 dark:border-stone-800"
           currentUser={currentUser}
@@ -966,7 +1099,7 @@ export default function App() {
         onClose={() => setShowLangModal(false)}
       />
 
-      {/* Premium Upgrade Modal (8 Months Free VIP) */}
+      {/* Premium Upgrade Modal (5 Months Free VIP) */}
       <PremiumModal
         isOpen={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}

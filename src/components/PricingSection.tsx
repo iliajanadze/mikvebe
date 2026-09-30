@@ -19,13 +19,13 @@ export interface PricingPlan {
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    id: 'free-8m-starter',
-    name: '8 თვე უფასო VIP',
-    durationLabel: 'სტანდარტული წვდომა (8 თვე უფასოდ)',
+    id: 'free-5m-starter',
+    name: '5 თვე უფასო VIP',
+    durationLabel: 'სტანდარტული წვდომა (5 თვე უფასოდ)',
     price: '$0',
     priceNumeric: 0,
-    period: '/ 8 თვე',
-    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    period: '/ 5 თვე',
+    monthlyBreakdown: '0₾ • 5 თვე უფასო VIP',
     savingsBadge: '100% უფასო',
     features: [
       'თეფშის კალორიების ანალიზი ფოტოთი',
@@ -34,48 +34,48 @@ export const PRICING_PLANS: PricingPlan[] = [
     ],
   },
   {
-    id: 'free-8m-diet',
-    name: '8 თვე უფასო VIP',
-    durationLabel: 'კლინიკური დიეტოლოგია (8 თვე უფასოდ)',
+    id: 'free-5m-diet',
+    name: '5 თვე უფასო VIP',
+    durationLabel: 'კლინიკური დიეტოლოგია (5 თვე უფასოდ)',
     price: '$0',
     priceNumeric: 0,
-    period: '/ 8 თვე',
-    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    period: '/ 5 თვე',
+    monthlyBreakdown: '0₾ • 5 თვე უფასო VIP',
     savingsBadge: '100% უფასო',
     features: [
-      'სრული წვდომა 8 თვის განმავლობაში',
+      'სრული წვდომა 5 თვის განმავლობაში',
       'კალორიები, ცილები, ცხიმები, ნახშირწყლები',
       '1-თვიანი კლინიკური კვების გეგმა',
     ],
   },
   {
-    id: 'free-8m-pro',
-    name: '8 თვე უფასო VIP',
-    durationLabel: 'სპორტული & TDEE რეჟიმი (8 თვე უფასოდ)',
+    id: 'free-5m-pro',
+    name: '5 თვე უფასო VIP',
+    durationLabel: 'სპორტული & TDEE რეჟიმი (5 თვე უფასოდ)',
     price: '$0',
     priceNumeric: 0,
-    period: '/ 8 თვე',
-    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    period: '/ 5 თვე',
+    monthlyBreakdown: '0₾ • 5 თვე უფასო VIP',
     savingsBadge: '100% უფასო',
     isPopular: true,
     features: [
-      'სრული წვდომა 8 თვის განმავლობაში',
+      'სრული წვდომა 5 თვის განმავლობაში',
       'BMR / TDEE კალკულატორი სპორტსმენებისთვის',
       'კვების გეგმების შენახვა & PDF ექსპორტი',
     ],
   },
   {
-    id: 'free-8m-all',
-    name: '8 თვე უფასო VIP',
-    durationLabel: 'All-in-One VIP (8 თვე უფასოდ)',
+    id: 'free-5m-all',
+    name: '5 თვე უფასო VIP',
+    durationLabel: 'All-in-One VIP (5 თვე უფასოდ)',
     price: '$0',
     priceNumeric: 0,
-    period: '/ 8 თვე',
-    monthlyBreakdown: '0₾ • 8 თვე უფასო VIP',
+    period: '/ 5 თვე',
+    monthlyBreakdown: '0₾ • 5 თვე უფასო VIP',
     savingsBadge: '100% უფასო',
     isBestDeal: true,
     features: [
-      '8 თვე შეუზღუდავი წვდომა ყველაფერზე',
+      '5 თვე შეუზღუდავი წვდომა ყველაფერზე',
       'თეფშის ფოტოს კალორიების სრული გახსნა',
       'პერსონალური AI შეფი & დიეტოლოგი',
     ],
@@ -173,10 +173,10 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       setStatusNotice('✅ 1-ლი კლიკი შესრულდა! დარჩა 1 კლიკი VIP-ის გასააქტიურებლად.');
       // Keep modal open or let user click step 2
     } else if (currentClicks >= 1) {
-      // 2nd click completed -> Activate 8 Months Free VIP!
+      // 2nd click completed -> Activate 5 Months Free VIP!
       setPlanClicks((prev) => ({ ...prev, [adModalPlan.id]: 2 }));
       setIsAdModalOpen(false);
-      setStatusNotice('🎉 გილოცავთ! 8 თვე უფასო VIP წარმატებით გააქტიურდა!');
+      setStatusNotice('🎉 გილოცავთ! 5 თვე უფასო VIP წარმატებით გააქტიურდა!');
 
       if (onActivateVIP) {
         onActivateVIP();
@@ -192,7 +192,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       return (
         <span className="flex items-center justify-center gap-1.5">
           <Zap className="w-3.5 h-3.5 fill-white" />
-          <span>💎 VIP აქტიურია (8 თვე უფასო)</span>
+          <span>💎 VIP აქტიურია (5 თვე უფასო)</span>
         </span>
       );
     }
@@ -201,7 +201,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       return (
         <span className="flex items-center justify-center gap-1.5">
           <UserPlus className="w-3.5 h-3.5" />
-          <span>რეგისტრაცია & 8 თვე უფასო VIP</span>
+          <span>რეგისტრაცია & 5 თვე უფასო VIP</span>
         </span>
       );
     }
@@ -220,7 +220,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
     return (
       <span className="flex items-center justify-center gap-1.5">
         <Zap className="w-3.5 h-3.5 fill-white" />
-        <span>8 თვე უფასო VIP-ის გააქტიურება</span>
+        <span>5 თვე უფასო VIP-ის გააქტიურება</span>
       </span>
     );
   };
@@ -235,11 +235,11 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         <div className="text-center max-w-xl mx-auto space-y-2 mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 text-[11px] font-bold uppercase tracking-wider">
             <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-            <span>სპეციალური აქცია • 8 თვე უფასო VIP</span>
+            <span>სპეციალური აქცია • 5 თვე უფასო VIP</span>
           </div>
 
           <h2 className="font-serif-geo text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight">
-            გადადით <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">8 თვე უფასო VIP</span>-ზე
+            გადადით <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">5 თვე უფასო VIP</span>-ზე
           </h2>
 
           <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300">
@@ -250,7 +250,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
           {(statusNotice || isPremium) && (
             <div className="mt-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-2 border-amber-400 dark:border-amber-500/80 text-amber-950 dark:text-amber-200 text-xs sm:text-sm font-bold animate-in fade-in flex items-center justify-center gap-2 text-center shadow-xs">
               <span className="text-lg">🎉</span>
-              <span>{statusNotice || 'გილოცავთ! 8 თვე უფასო VIP წარმატებით გააქტიურდა!'}</span>
+              <span>{statusNotice || 'გილოცავთ! 5 თვე უფასო VIP წარმატებით გააქტიურდა!'}</span>
             </div>
           )}
 
@@ -629,7 +629,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         <div className="mt-6 text-center max-w-lg mx-auto space-y-1 text-[11px] text-stone-500 dark:text-stone-400">
           <div className="flex items-center justify-center gap-1.5 text-stone-700 dark:text-stone-300 font-semibold">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>მყისიერი გააქტიურება • 8 თვე 100%-ით უფასო VIP წვდომა ყველასთვის • ბარათი არ არის საჭირო</span>
+            <span>მყისიერი გააქტიურება • 5 თვე 100%-ით უფასო VIP წვდომა ყველასთვის • ბარათი არ არის საჭირო</span>
           </div>
           <p>
             რეგისტრაციის შემდეგ დააჭირეთ 2-ჯერ რეკლამის სანახავად და მიიღეთ სრული წვდომა 0 დოლარად!

@@ -59,7 +59,7 @@ export const AdsterraAdModal: React.FC<AdsterraAdModalProps> = ({
             <div>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider mb-1">
                 <Sparkles className="w-3 h-3 text-amber-200" />
-                <span>8 თვე უფასო VIP გააქტიურება</span>
+                <span>5 თვე უფასო VIP გააქტიურება</span>
               </div>
               <h3 className="font-serif-geo text-lg sm:text-xl font-extrabold">
                 {clickStep === 1
@@ -86,7 +86,7 @@ export const AdsterraAdModal: React.FC<AdsterraAdModalProps> = ({
             <span>
               {clickStep === 1
                 ? 'დარჩა 1 კლიკი VIP-ის სრულად მისაღებად'
-                : 'ბოლო კლიკი! დააჭირეთ და მიიღეთ 8 თვე უფასო VIP'}
+                : 'ბოლო კლიკი! დააჭირეთ და მიიღეთ 5 თვე უფასო VIP'}
             </span>
           </div>
 
@@ -126,7 +126,7 @@ export const AdsterraAdModal: React.FC<AdsterraAdModalProps> = ({
               <span>
                 {clickStep === 1
                   ? '👉 გადადით Adsterra-ს რეკლამაზე (დარჩა 1 კლიკი)'
-                  : '🎉 გადადით და გაააქტიურეთ 8 თვე უფასო VIP! ($0)'}
+                  : '🎉 გადადით და გაააქტიურეთ 5 თვე უფასო VIP! ($0)'}
               </span>
               <ExternalLink className="w-4 h-4 shrink-0" />
             </a>

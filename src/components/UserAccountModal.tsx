@@ -135,8 +135,14 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
                     </h4>
                     <p className="text-xs text-stone-500">{currentUser.email}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-950 border border-amber-300">
-                        {currentUser.membershipStatus}
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                        currentUser.isPremium || currentUser.membershipStatus === '5 თვე უფასო VIP' || currentUser.membershipStatus === 'პრემიუმ (აქტიური)'
+                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-amber-200/80 text-amber-950 border-amber-300'
+                      }`}>
+                        {currentUser.isPremium || currentUser.membershipStatus === '5 თვე უფასო VIP'
+                          ? '💎 5 თვე უფასო VIP (აქტიური)'
+                          : currentUser.membershipStatus}
                       </span>
                       <span className="text-[10px] text-stone-400">
                         რეგისტრაცია: {new Date(currentUser.createdAt).toLocaleDateString('ka-GE')}
@@ -232,7 +238,7 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
                   <span className="text-xl">⭐</span>
                   <div>
                     <p className="text-amber-950 font-black">{promptReason}</p>
-                    <p className="text-[11px] font-normal text-stone-600 mt-0.5">შეავსეთ სახელი და ელ-ფოსტა 8 თვე უფასო VIP-ის მისაღებად.</p>
+                    <p className="text-[11px] font-normal text-stone-600 mt-0.5">შეავსეთ სახელი და ელ-ფოსტა 5 თვე უფასო VIP-ის მისაღებად.</p>
                   </div>
                 </div>
               )}

@@ -207,7 +207,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
           {/* 4 Pricing Tiers Selection Grid */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-              აირჩიეთ სასურველი პაკეტი (8 თვე უფასო VIP):
+              აირჩიეთ სასურველი პაკეტი (5 თვე უფასო VIP):
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -215,10 +215,10 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               <div className="p-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/60 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
+                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">5 თვე უფასო VIP</span>
                     <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">0₾ • 8 თვე უფასო წვდომა</p>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">0₾ • 5 თვე უფასო წვდომა</p>
                 </div>
                 <button
                   type="button"
@@ -235,7 +235,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                     ? 'რეგისტრაცია & VIP'
                     : modalClicks[0] === 1
                     ? 'დარჩა 1 კლიკი!'
-                    : '8 თვე უფასო VIP-ის გააქტიურება'}
+                    : '5 თვე უფასო VIP-ის გააქტიურება'}
                 </button>
               </div>
 
@@ -243,7 +243,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               <div className="p-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/60 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
+                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">5 თვე უფასო VIP</span>
                     <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
                   </div>
                   <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-3">0₾ • კლინიკური დიეტოლოგია</p>
@@ -263,7 +263,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                     ? 'რეგისტრაცია & VIP'
                     : modalClicks[1] === 1
                     ? 'დარჩა 1 კლიკი!'
-                    : '8 თვე უფასო VIP-ის გააქტიურება'}
+                    : '5 თვე უფასო VIP-ის გააქტიურება'}
                 </button>
               </div>
 
@@ -272,7 +272,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
+                      <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">5 თვე უფასო VIP</span>
                       <span className="text-[9px] bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 px-1.5 py-0.2 rounded font-bold">POPULAR</span>
                     </div>
                     <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
@@ -294,7 +294,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                     ? 'რეგისტრაცია & VIP'
                     : modalClicks[2] === 1
                     ? 'დარჩა 1 კლიკი!'
-                    : '8 თვე უფასო VIP-ის გააქტიურება'}
+                    : '5 თვე უფასო VIP-ის გააქტიურება'}
                 </button>
               </div>
 
@@ -305,7 +305,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">8 თვე უფასო VIP</span>
+                    <span className="font-serif-geo font-bold text-sm text-stone-900 dark:text-stone-100">5 თვე უფასო VIP</span>
                     <span className="font-serif-geo text-lg font-black text-emerald-600 dark:text-emerald-400">$0</span>
                   </div>
                   <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-3">0₾ • All-in-One სრული წვდომა</p>
@@ -325,7 +325,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                     ? 'რეგისტრაცია & VIP'
                     : modalClicks[3] === 1
                     ? 'დარჩა 1 კლიკი!'
-                    : '8 თვე უფასო VIP-ის გააქტიურება • BEST DEAL'}
+                    : '5 თვე უფასო VIP-ის გააქტიურება • BEST DEAL'}
                 </button>
               </div>
             </div>
