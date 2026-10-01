@@ -23,7 +23,6 @@ import { LanguageSelectionModal } from './components/LanguageSelectionModal';
 import { PremiumModal } from './components/PremiumModal';
 import { PremiumSection } from './components/PremiumSection';
 import { PricingSection } from './components/PricingSection';
-import { AdsterraBanner } from './components/AdsterraBanner';
 import {
   CookingMethodSelector,
   CookingMethodFilter,
@@ -39,6 +38,11 @@ import {
 import { FullMonthDietPlan } from './types/dietPlan';
 import { UserAccount } from './types/userAccount';
 import { Language, TRANSLATIONS } from './utils/i18n';
+import {
+  getVipRemainingTime,
+  getOrCreateVipExpirationDate,
+  setVipExpirationOnActivation,
+} from './utils/vipTimer';
 import {
   ChefHat,
   AlertCircle,
@@ -95,9 +99,24 @@ export default function App() {
   // Premium state (5 Months Free VIP) - strictly synced with localStorage & user account
   const [isPremium, setIsPremium] = useState<boolean>(() => {
     try {
+      const storedExp = localStorage.getItem('mikvebe_vip_expires_at');
+      if (storedExp) {
+        const expTime = new Date(storedExp).getTime();
+        if (!isNaN(expTime)) {
+          if (expTime > Date.now()) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }
+
       const storedUser = localStorage.getItem(STORAGE_USER_ACCOUNT_KEY);
       if (storedUser) {
         const u = JSON.parse(storedUser);
+        if (u.vipExpiresAt && new Date(u.vipExpiresAt).getTime() > Date.now()) {
+          return true;
+        }
         if (
           u.isPremium ||
           u.membershipStatus === '5 თვე უფასო VIP' ||
@@ -139,17 +158,43 @@ export default function App() {
     }
   });
 
-  const handleTogglePremium = (active: boolean) => {
-    setIsPremium(active);
-    sessionStorage.setItem(STORAGE_PREMIUM_KEY, active ? 'true' : 'false');
-    localStorage.setItem(STORAGE_PREMIUM_KEY, active ? 'true' : 'false');
-
-    if (active) {
-      setVipCelebrationToast('🎉 გილოცავთ! 5 თვე უფასო VIP წარმატებით გააქტიურდა!');
-      setTimeout(() => {
-        setVipCelebrationToast(null);
-      }, 7000);
+  // Automatically keep currentUser stored in accounts database whenever it changes
+  useEffect(() => {
+    if (currentUser) {
+      try {
+        localStorage.setItem(STORAGE_USER_ACCOUNT_KEY, JSON.stringify(currentUser));
+        if (currentUser.email) {
+          const cleanEmail = currentUser.email.trim().toLowerCase();
+          const storedDb = localStorage.getItem(STORAGE_ACCOUNTS_DB_KEY);
+          const accountsDb = storedDb ? JSON.parse(storedDb) : {};
+          accountsDb[cleanEmail] = currentUser;
+          localStorage.setItem(STORAGE_ACCOUNTS_DB_KEY, JSON.stringify(accountsDb));
+        }
+      } catch (err) {
+        console.warn('Failed to sync currentUser to storage:', err);
+      }
     }
+  }, [currentUser]);
+
+  const handleTogglePremium = (active: boolean, plan?: { monthsCount?: number; name?: string; id?: string }) => {
+    // User requested: Premium cannot be disabled / cancelled until expiration time runs out
+    if (!active) {
+      return;
+    }
+
+    const months = plan?.monthsCount || 5;
+    const planName = plan?.name || `${months} თვე VIP`;
+
+    setIsPremium(true);
+    sessionStorage.setItem(STORAGE_PREMIUM_KEY, 'true');
+    localStorage.setItem(STORAGE_PREMIUM_KEY, 'true');
+
+    const dates = setVipExpirationOnActivation(months);
+    const vipInfo = getVipRemainingTime(dates.expiresAt);
+    setVipCelebrationToast(`🎉 გილოცავთ! ${planName} წარმატებით გააქტიურდა! (${vipInfo.displayText}) • ყველა ფუნქცია სრულად გაიხსნა.`);
+    setTimeout(() => {
+      setVipCelebrationToast(null);
+    }, 7000);
 
     // CRITICAL: Ensure VIP is remembered on currentUser AND in accounts database!
     setCurrentUser((prev) => {
@@ -159,22 +204,25 @@ export default function App() {
         email: 'user@mikvebe.ge',
         createdAt: new Date().toISOString(),
         savedPlanIds: [],
-        membershipStatus: active ? '5 თვე უფასო VIP' : 'უფასო',
-        isPremium: active,
+        membershipStatus: planName,
+        isPremium: true,
       };
 
       const updated: UserAccount = {
         ...current,
-        isPremium: active,
-        membershipStatus: active ? '5 თვე უფასო VIP' : 'უფასო',
+        isPremium: true,
+        membershipStatus: planName,
+        vipActivatedAt: dates.activatedAt,
+        vipExpiresAt: dates.expiresAt,
       };
 
       try {
         localStorage.setItem(STORAGE_USER_ACCOUNT_KEY, JSON.stringify(updated));
         if (updated.email) {
+          const cleanEmail = updated.email.trim().toLowerCase();
           const storedDb = localStorage.getItem(STORAGE_ACCOUNTS_DB_KEY);
           const accountsDb = storedDb ? JSON.parse(storedDb) : {};
-          accountsDb[updated.email.trim().toLowerCase()] = updated;
+          accountsDb[cleanEmail] = updated;
           localStorage.setItem(STORAGE_ACCOUNTS_DB_KEY, JSON.stringify(accountsDb));
         }
       } catch (err) {
@@ -201,32 +249,6 @@ export default function App() {
       el.scrollIntoView({ behavior: 'smooth' });
     }
     setShowPremiumModal(true);
-  };
-
-  const handleResetVIP = () => {
-    setIsPremium(false);
-    sessionStorage.removeItem(STORAGE_PREMIUM_KEY);
-    localStorage.removeItem(STORAGE_PREMIUM_KEY);
-    setCurrentUser((prev) => {
-      if (!prev) return null;
-      const updated: UserAccount = {
-        ...prev,
-        isPremium: false,
-        membershipStatus: 'უფასო',
-      };
-      try {
-        localStorage.setItem(STORAGE_USER_ACCOUNT_KEY, JSON.stringify(updated));
-        if (updated.email) {
-          const storedDb = localStorage.getItem(STORAGE_ACCOUNTS_DB_KEY);
-          const accountsDb = storedDb ? JSON.parse(storedDb) : {};
-          accountsDb[updated.email.trim().toLowerCase()] = updated;
-          localStorage.setItem(STORAGE_ACCOUNTS_DB_KEY, JSON.stringify(accountsDb));
-        }
-      } catch {}
-      return updated;
-    });
-    setVipCelebrationToast('🔄 VIP სტატუსი გასუფთავდა სატესტოდ.');
-    setTimeout(() => setVipCelebrationToast(null), 4000);
   };
 
   const handleSelectLanguage = (selectedLang: Language) => {
@@ -380,13 +402,18 @@ export default function App() {
     let finalAccount: UserAccount;
 
     if (existingAccount) {
-      // Existing user logging in
+      // Existing user logging in - strictly check VIP status
       const hasVip =
-        isPremium ||
-        existingAccount.isPremium ||
+        existingAccount.isPremium === true ||
         existingAccount.membershipStatus === '5 თვე უფასო VIP' ||
         existingAccount.membershipStatus === 'პრემიუმ (აქტიური)' ||
-        existingAccount.membershipStatus === '8 თვე უფასო VIP';
+        (!!existingAccount.vipExpiresAt && new Date(existingAccount.vipExpiresAt).getTime() > Date.now()) ||
+        isPremium; // Inherit if user activated VIP right before logging in
+
+      let existingExp = existingAccount.vipExpiresAt;
+      if (hasVip && (!existingExp || new Date(existingExp).getTime() <= Date.now())) {
+        existingExp = getOrCreateVipExpirationDate(true)?.toISOString();
+      }
 
       finalAccount = {
         ...existingAccount,
@@ -394,16 +421,29 @@ export default function App() {
         email: userData.email,
         isPremium: hasVip,
         membershipStatus: hasVip ? '5 თვე უფასო VIP' : 'უფასო',
+        vipExpiresAt: existingExp,
       };
 
       if (hasVip) {
         setIsPremium(true);
         localStorage.setItem(STORAGE_PREMIUM_KEY, 'true');
         sessionStorage.setItem(STORAGE_PREMIUM_KEY, 'true');
+        if (existingExp) {
+          localStorage.setItem('mikvebe_vip_expires_at', existingExp);
+        }
+      } else {
+        setIsPremium(false);
+        localStorage.removeItem(STORAGE_PREMIUM_KEY);
+        sessionStorage.removeItem(STORAGE_PREMIUM_KEY);
+        localStorage.removeItem('mikvebe_vip_expires_at');
       }
     } else {
       // New user registering
       const id = `MIK-${Math.floor(10000 + Math.random() * 90000)}`;
+      const expDate = isPremium
+        ? (localStorage.getItem('mikvebe_vip_expires_at') || getOrCreateVipExpirationDate(true)?.toISOString())
+        : undefined;
+
       finalAccount = {
         id,
         name: userData.name,
@@ -411,6 +451,7 @@ export default function App() {
         createdAt: new Date().toISOString(),
         membershipStatus: isPremium ? '5 თვე უფასო VIP' : 'უფასო',
         isPremium: isPremium,
+        vipExpiresAt: expDate,
         savedPlanIds: savedDietPlans.map((p) => p.id),
       };
     }
@@ -428,6 +469,11 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    localStorage.removeItem(STORAGE_USER_ACCOUNT_KEY);
+    setIsPremium(false);
+    sessionStorage.removeItem(STORAGE_PREMIUM_KEY);
+    localStorage.removeItem(STORAGE_PREMIUM_KEY);
+    localStorage.removeItem('mikvebe_vip_expires_at');
   };
 
   const handleImageSelected = (base64OrUrl: string, presetId: string | null) => {
@@ -1019,19 +1065,15 @@ export default function App() {
           </div>
         )}
 
-        {/* Adsterra Advertisement Banner (728x90) */}
-        <AdsterraBanner />
-
-        {/* Feature: 5 Months Free VIP Section (All 4 tiers: $0, 5 თვე უფასო VIP) */}
+        {/* VIP Pricing Section (1m $3.50, 3m $6.50, 5m $9.50, 6m $10.50) */}
         <PricingSection
           className="border-t-2 border-amber-300/70 dark:border-stone-800"
           currentUser={currentUser}
           onRequireAuth={handleRequireAuthForVIP}
           isPremium={isPremium}
-          onActivateVIP={() => handleTogglePremium(true)}
-          onResetVIP={handleResetVIP}
-          onPlanSelected={() => {
-            handleTogglePremium(true);
+          onActivateVIP={(plan) => handleTogglePremium(true, plan)}
+          onPlanSelected={(plan) => {
+            handleTogglePremium(true, plan);
           }}
         />
 
@@ -1052,6 +1094,7 @@ export default function App() {
 
           <PremiumSection
             isPremium={isPremium}
+            currentUser={currentUser}
             onTogglePremium={handleTogglePremium}
             onStartVipFlow={handleOpenPricing}
             onOpenDietPlan={() => {

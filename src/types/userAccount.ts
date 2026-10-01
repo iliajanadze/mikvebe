@@ -6,6 +6,8 @@ export interface UserAccount {
   createdAt: string;
   membershipStatus: string; // e.g. '5 თვე უფასო VIP' | 'უფასო' | 'პრემიუმ (აქტიური)'
   isPremium?: boolean;
+  vipExpiresAt?: string;
+  vipActivatedAt?: string;
   savedPlanIds: string[];
 }
 

@@ -17,6 +17,7 @@ import {
   X,
   ExternalLink,
 } from 'lucide-react';
+import { getVipRemainingTime, getOrCreateVipExpirationDate } from '../utils/vipTimer';
 
 interface UserAccountModalProps {
   isOpen: boolean;
@@ -134,16 +135,28 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
                       <Award className="w-4 h-4 text-amber-600" />
                     </h4>
                     <p className="text-xs text-stone-500">{currentUser.email}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                        currentUser.isPremium || currentUser.membershipStatus === '5 თვე უფასო VIP' || currentUser.membershipStatus === 'პრემიუმ (აქტიური)'
-                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-amber-200/80 text-amber-950 border-amber-300'
-                      }`}>
-                        {currentUser.isPremium || currentUser.membershipStatus === '5 თვე უფასო VIP'
-                          ? '💎 5 თვე უფასო VIP (აქტიური)'
-                          : currentUser.membershipStatus}
-                      </span>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {(() => {
+                        const hasVip = currentUser.isPremium || currentUser.membershipStatus?.includes('VIP') || currentUser.membershipStatus === 'პრემიუმ (აქტიური)';
+                        const vipInfo = hasVip ? getVipRemainingTime(currentUser.vipExpiresAt || getOrCreateVipExpirationDate(true)) : null;
+
+                        return (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 ${
+                            hasVip
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'bg-amber-200/80 text-amber-950 border-amber-300'
+                          }`}>
+                            {hasVip ? (
+                              <>
+                                <span>💎 {currentUser.membershipStatus || 'VIP (აქტიური)'}</span>
+                                {vipInfo && <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">• {vipInfo.displayText}</span>}
+                              </>
+                            ) : (
+                              currentUser.membershipStatus
+                            )}
+                          </span>
+                        );
+                      })()}
                       <span className="text-[10px] text-stone-400">
                         რეგისტრაცია: {new Date(currentUser.createdAt).toLocaleDateString('ka-GE')}
                       </span>
@@ -238,7 +251,7 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
                   <span className="text-xl">⭐</span>
                   <div>
                     <p className="text-amber-950 font-black">{promptReason}</p>
-                    <p className="text-[11px] font-normal text-stone-600 mt-0.5">შეავსეთ სახელი და ელ-ფოსტა 5 თვე უფასო VIP-ის მისაღებად.</p>
+                    <p className="text-[11px] font-normal text-stone-600 mt-0.5">შეავსეთ სახელი და ელ-ფოსტა VIP პაკეტის გასააქტიურებლად.</p>
                   </div>
                 </div>
               )}

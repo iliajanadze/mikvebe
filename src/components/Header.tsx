@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChefHat, User, Moon, Sun, Zap } from 'lucide-react';
 import { UserAccount } from '../types/userAccount';
 import { Language, TRANSLATIONS } from '../utils/i18n';
+import { getVipRemainingTime, getOrCreateVipExpirationDate } from '../utils/vipTimer';
 
 interface HeaderProps {
   savedCount: number;
@@ -122,15 +123,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Zap className={`w-3.5 h-3.5 ${isPremium ? 'fill-white' : 'text-amber-200 fill-amber-200'}`} />
             <span>
-              {isPremium ? (
+              {isPremium ? (() => {
+                const vipInfo = getVipRemainingTime(currentUser?.vipExpiresAt || getOrCreateVipExpirationDate(isPremium));
+                return (
+                  <>
+                    <span className="xs:hidden">VIP</span>
+                    <span className="hidden xs:inline">💎 VIP ({vipInfo.badgeText})</span>
+                  </>
+                );
+              })() : (
                 <>
                   <span className="xs:hidden">VIP</span>
-                  <span className="hidden xs:inline">💎 VIP აქტიურია</span>
-                </>
-              ) : (
-                <>
-                  <span className="xs:hidden">5 თვე VIP</span>
-                  <span className="hidden xs:inline">5 თვე უფასო VIP</span>
+                  <span className="hidden xs:inline">VIP პაკეტები</span>
                 </>
               )}
             </span>

@@ -1004,6 +1004,71 @@ app.get('/api/feedback/recent', (_req, res) => {
   });
 });
 
+// VIP 2000 Limited Spots Counter
+const VIP_TOTAL_SPOTS = 2000;
+const VIP_SPOTS_FILE = path.join(__dirname, 'vip_spots_state.json');
+
+interface VipSpotsState {
+  totalSpots: number;
+  claimedSpots: number;
+  lastUpdated: string;
+}
+
+function loadVipSpotsState(): VipSpotsState {
+  try {
+    if (fs.existsSync(VIP_SPOTS_FILE)) {
+      const data = fs.readFileSync(VIP_SPOTS_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.warn('[VIP Spots] Error reading spots file:', err);
+  }
+  // Default state: 2,000 available VIP spots
+  return {
+    totalSpots: VIP_TOTAL_SPOTS,
+    claimedSpots: 0,
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
+let vipSpotsState: VipSpotsState = loadVipSpotsState();
+
+function saveVipSpotsState() {
+  try {
+    fs.writeFileSync(VIP_SPOTS_FILE, JSON.stringify(vipSpotsState, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('[VIP Spots] Error saving spots file:', err);
+  }
+}
+
+app.get('/api/vip/spots', (_req, res) => {
+  const remaining = Math.max(0, vipSpotsState.totalSpots - vipSpotsState.claimedSpots);
+  return res.json({
+    totalSpots: vipSpotsState.totalSpots,
+    claimedSpots: vipSpotsState.claimedSpots,
+    remainingSpots: remaining,
+    isPromoActive: remaining > 0,
+    percentageClaimed: Math.min(100, Math.round((vipSpotsState.claimedSpots / vipSpotsState.totalSpots) * 100)),
+  });
+});
+
+app.post('/api/vip/claim', (_req, res) => {
+  if (vipSpotsState.claimedSpots < vipSpotsState.totalSpots) {
+    vipSpotsState.claimedSpots += 1;
+    vipSpotsState.lastUpdated = new Date().toISOString();
+    saveVipSpotsState();
+  }
+  const remaining = Math.max(0, vipSpotsState.totalSpots - vipSpotsState.claimedSpots);
+  return res.json({
+    success: true,
+    totalSpots: vipSpotsState.totalSpots,
+    claimedSpots: vipSpotsState.claimedSpots,
+    remainingSpots: remaining,
+    isPromoActive: remaining > 0,
+    percentageClaimed: Math.min(100, Math.round((vipSpotsState.claimedSpots / vipSpotsState.totalSpots) * 100)),
+  });
+});
+
 
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {

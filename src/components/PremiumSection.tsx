@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { PlateCalorieResult } from '../types/chef';
 import { calculateDietTargets } from '../utils/dietCalculations';
+import { UserAccount } from '../types/userAccount';
+import { getVipRemainingTime, getOrCreateVipExpirationDate } from '../utils/vipTimer';
 import {
   Camera,
   Upload,
@@ -27,6 +29,7 @@ interface PremiumSectionProps {
   onTogglePremium: (active: boolean) => void;
   onOpenDietPlan: () => void;
   onStartVipFlow?: () => void;
+  currentUser?: UserAccount | null;
   onOpenDietPlanWithParams?: (params: {
     age: number;
     gender: 'ქალი' | 'კაცი';
@@ -135,8 +138,10 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
   onTogglePremium,
   onOpenDietPlan,
   onStartVipFlow,
+  currentUser,
   onOpenDietPlanWithParams,
 }) => {
+  const vipInfo = getVipRemainingTime(currentUser?.vipExpiresAt || getOrCreateVipExpirationDate(isPremium));
   const [activeTab, setActiveTab] = useState<'plate_calories' | 'dietitian_sports'>('plate_calories');
 
   // Plate Calories state
@@ -321,7 +326,7 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
           </p>
         </div>
 
-        {/* Status / Activation Toggle Button */}
+        {/* Status / Activation Display */}
         <div className="flex items-center gap-2.5 shrink-0">
           {!isPremium ? (
             <button
@@ -333,13 +338,10 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
               <span>გააქტიურება</span>
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => onTogglePremium(false)}
-              className="px-4 py-2.5 rounded-2xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold text-xs transition-colors cursor-pointer"
-            >
-              პრემიუმის გათიშვა
-            </button>
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border-2 border-emerald-500 text-emerald-950 dark:text-emerald-200 font-bold text-xs shadow-xs">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>💎 VIP აქტიურია ({vipInfo.displayText})</span>
+            </div>
           )}
         </div>
       </div>
@@ -403,7 +405,7 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
               className="px-8 py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-700 hover:to-orange-700 text-white rounded-2xl font-serif-geo font-bold text-sm sm:text-base shadow-xl shadow-amber-900/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer inline-flex items-center gap-2.5"
             >
               <Zap className="w-5 h-5 fill-white" />
-              <span>5 თვე უფასო VIP-ის გააქტიურება</span>
+              <span>VIP პაკეტის შეძენა & გააქტიურება</span>
               <Sparkles className="w-4 h-4 text-amber-200" />
             </button>
 
@@ -412,7 +414,7 @@ export const PremiumSection: React.FC<PremiumSectionProps> = ({
               onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
               className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline block mx-auto cursor-pointer"
             >
-              5 თვე უფასო VIP პაკეტების ნახვა →
+              VIP პაკეტებისა და ტარიფების ნახვა →
             </button>
           </div>
         </div>
